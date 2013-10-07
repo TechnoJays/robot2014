@@ -94,18 +94,15 @@ class Feeder(object):
         return
 
     def _initialize(self, parameters, logging_enabled):
-        """Summary.
+        """Initialize and configure a Feeder object.
 
-        Full description and notes.
+        Initialize instance variables to defaults, read parameter values from
+        the specified file, instantiate required objects (compressor, solenoid,
+        etc), and update status variables.
 
         Args:
-            asdf: desc (default 0)
-
-        Returns:
-            Description.
-
-        Raises:
-            Exceptions.
+            parameters: The parameters filename to use for Feeder configuration.
+            logging_enabled: True if logging should be enabled.
 
         """
         # Initialize public member variables
@@ -139,18 +136,13 @@ class Feeder(object):
         self.load_parameters()
 
     def load_parameters(self):
-        """Summary.
+        """Load values from a parameter file and create and initialize objects.
 
-        Full description and notes.
-
-        Args:
-            asdf: desc (default 0)
+        Read parameter values from the specified file, instantiate required
+        objects (compressor, solenoid, etc), and update status variables.
 
         Returns:
-            Description.
-
-        Raises:
-            Exceptions.
+            True if the parameter file was processed successfully.
 
         """
         # Define and initialize local variables
@@ -176,23 +168,28 @@ class Feeder(object):
             else:
                 self._log.write_line("Failed to read Feeder parameters")
 
+        # Store parameters from the file to local variables
         if parameters_read:
             pressure_switch_channel = self._parameters.get_value("PRESSURE_SWITCH_CHANNEL")
             compressor_relay_channel = self._parameters.get_value("COMPRESSOR_RELAY_CHANNEL")
             solenoid_channel = self._parameters.get_value("SOLENOID_CHANNEL")
 
+        # Create the compressor object if the channel is greater than 0
         self.compressor_enabled = False
         if pressure_switch_channel > 0 and compressor_relay_channel > 0:
             self._compressor = wpilib.Compressor(pressure_switch_channel, compressor_relay_channel)
             if self._compressor:
                 self.compressor_enabled = True
 
+        # Create the solenoid object if the channel is greater than 0
         self.piston_enabled = False
         if solenoid_channel > 0:
             self._piston = wpilib.Solenoid(solenoid_channel)
             if self._piston:
                 self.piston_enabled = True
 
+        # If both the compressor and solenoid are enabled, the feeder is
+        # fully functional
         if self.compressor_enabled and self.solenoid_enabled:
             self.feeder_enabled = True
         else:
@@ -215,18 +212,13 @@ class Feeder(object):
         return parameters_read
 
     def set_robot_state(self, state):
-        """Summary.
+        """Set the current game state of the robot.
 
-        Full description and notes.
+        Store the state of the robot/game mode (disabled, teleop, autonomous)
+        and perform any actions that are state related.
 
         Args:
-            asdf: desc (default 0)
-
-        Returns:
-            Description.
-
-        Raises:
-            Exceptions.
+            state: current robot state (ProgramState enum).
 
         """
         self._robot_state = state
@@ -244,18 +236,10 @@ class Feeder(object):
             pass
 
     def set_log_state(self, state):
-        """Summary.
-
-        Full description and notes.
+        """Set the logging state for this object.
 
         Args:
-            asdf: desc (default 0)
-
-        Returns:
-            Description.
-
-        Raises:
-            Exceptions.
+            state: True if logging should be enabled.
 
         """
         if state and self._log:
@@ -264,18 +248,13 @@ class Feeder(object):
             self._log_enabled = False
 
     def set_piston(self, state):
-        """Summary.
+        """Set the state of the feeder piston.
 
-        Full description and notes.
+        Setting to True will extend the piston, False will retract the piston.
+        This uses the solenoid powered by compressed air.
 
         Args:
-            asdf: desc (default 0)
-
-        Returns:
-            Description.
-
-        Raises:
-            Exceptions.
+            state: True if the piston is extended.
 
         """
         if self.feeder_enabled_ and self.solenoid_enabled_:
