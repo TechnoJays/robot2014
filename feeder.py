@@ -4,111 +4,155 @@ import common
 import datalog
 import parameters
 
-## Class desc
 class Feeder(object):
+    """A mechanism that feeds frisbees to a shooter.
+
+    This class desribes a feeder mechanism that uses an air compressor and a
+    solenoid to push a frisbee into the shooting mechanism.  A relay is used
+    to turn the compressor on and off, which powers a solenoid piston that does
+    the actual pushing.
+
+    Attributes:
+        feeder_enabled: True if the feeder is fully functional (default False).
+        compressor_enabled: True if the compressor is functional (default False).
+        solenoid_enabled: True if the solenoid is functional (default False).
+
+    """
     # Public member variables
     feeder_enabled = False
     compressor_enabled = False
     solenoid_enabled = False
 
     # Private member objects
-    compressor_ = None
-    log_ = None
-    parameters_ = None
-    piston_ = None
+    _compressor = None
+    _log = None
+    _parameters = None
+    _piston = None
 
     # Private member variables
-    log_enabled_ = False
-    parameters_file_ = None
-    robot_state_ = ProgramState.disabled
+    _log_enabled = False
+    _parameters_file = None
+    _robot_state = ProgramState.disabled
 
-    ## Short method description
-    #
-    #  Long description
-    #
     def __init__(self):
-        self.initialize("feeder.par", False)
+        """Create and initialize a frisbee feeder.
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
+        Instantiate a feeder using default values.
+
+        """
+        self._initialize("feeder.par", False)
+
     def __init__(self, logging_enabled):
-        self.initialize("feeder.par", logging_enabled)
+        """Create and initialize a frisbee feeder.
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
+        Instantiate a feeder and specify if logging is enabled or disabled.
+
+        Args:
+            logging_enabled: True if logging should be enabled.
+
+        """
+        self._initialize("feeder.par", logging_enabled)
+
     def __init__(self, parameters):
-        self.initialize(parameters, False)
+        """Create and initialize a frisbee feeder.
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
+        Instantiate a feeder and specify a parameters file.
+
+        Args:
+            parameters: The parameters filename to use for Feeder configuration.
+
+        """
+        self._initialize(parameters, False)
+
     def __init__(self, parameters, logging_enabled):
-        self.initialize(parameters, logging_enabled)
+        """Create and initialize a frisbee feeder.
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
+        Instantiate a feeder and specify a parameters file and whether logging
+        is enabled or disabled.
+
+        Args:
+            parameters: The parameters filename to use for Feeder configuration.
+            logging_enabled: True if logging should be enabled.
+
+        """
+        self._initialize(parameters, logging_enabled)
+
     def dispose(self):
-        if self.log_:
-            self.log_.close()
-        self.log_ = None
-        self.parameters_ = None
-        self.compressor_ = None
-        self.piston_ = None
+        """Dispose of a feeder object.
+
+        Dispose of a feeder object when it is no longer required by closing an
+        open log file if it exists, and removing references to any internal
+        objects.
+
+        """
+        if self._log:
+            self._log.close()
+        self._log = None
+        self._parameters = None
+        self._compressor = None
+        self._piston = None
         return
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
-    def initialize(self, parameters, logging_enabled):
+    def _initialize(self, parameters, logging_enabled):
+        """Summary.
+
+        Full description and notes.
+
+        Args:
+            asdf: desc (default 0)
+
+        Returns:
+            Description.
+
+        Raises:
+            Exceptions.
+
+        """
         # Initialize public member variables
         self.feeder_enabled = False
         self.compressor_enabled = False
         self.solenoid_enabled = False
 
         # Initialize private member objects
-        self.log_ = None
-        self.parameters_ = None
-        self.compressor_ = None
-        self.piston_ = None
+        self._log = None
+        self._parameters = None
+        self._compressor = None
+        self._piston = None
 
         # Initialize private parameters
 
         # Initialize private member variables
-        self.log_enabled_ = False
-        self.robot_state_ = ProgramState.disabled
+        self._log_enabled = False
+        self._robot_state = ProgramState.disabled
 
         # Create a new data log object
-        self.log_ = DataLog("feeder.log")
+        self._log = DataLog("feeder.log")
 
         # Enable logging if specified
-        if self.log_ and self.log_.file_opened:
-            self.log_enabled_ = logging_enabled
+        if self._log and self._log.file_opened:
+            self._log_enabled = logging_enabled
         else:
-            self.log_enabled_ = False
+            self._log_enabled = False
 
         # Read parameters file
-        self.parameters_file_ = parameters
+        self._parameters_file = parameters
         self.load_parameters()
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
     def load_parameters(self):
+        """Summary.
+
+        Full description and notes.
+
+        Args:
+            asdf: desc (default 0)
+
+        Returns:
+            Description.
+
+        Raises:
+            Exceptions.
+
+        """
         # Define and initialize local variables
         pressure_switch_channel = -1
         compressor_relay_channel = -1
@@ -116,37 +160,37 @@ class Feeder(object):
         parameters_read = False
 
         # Close and delete old objects
-        self.parameters_ = None
-        self.compressor_ = None
-        self.piston_ = None
+        self._parameters = None
+        self._compressor = None
+        self._piston = None
 
         # Read the parameters file
-        self.parameters_ = Parameters(self.parameters_file_)
-        if self.parameters_ and self.parameters_.file_opened:
-            parameters_read = self.parameters_.read_values()
-            self.parameters_.close()
+        self._parameters = Parameters(self._parameters_file)
+        if self._parameters and self._parameters.file_opened:
+            parameters_read = self._parameters.read_values()
+            self._parameters.close()
 
-        if self.log_enabled_:
+        if self._log_enabled:
             if parameters_read:
-                self.log_.write_line("Feeder parameters loaded successfully")
+                self._log.write_line("Feeder parameters loaded successfully")
             else:
-                self.log_.write_line("Failed to read Feeder parameters")
+                self._log.write_line("Failed to read Feeder parameters")
 
         if parameters_read:
-            pressure_switch_channel = self.parameters_.get_value("PRESSURE_SWITCH_CHANNEL")
-            compressor_relay_channel = self.parameters_.get_value("COMPRESSOR_RELAY_CHANNEL")
-            solenoid_channel = self.parameters_.get_value("SOLENOID_CHANNEL")
+            pressure_switch_channel = self._parameters.get_value("PRESSURE_SWITCH_CHANNEL")
+            compressor_relay_channel = self._parameters.get_value("COMPRESSOR_RELAY_CHANNEL")
+            solenoid_channel = self._parameters.get_value("SOLENOID_CHANNEL")
 
         self.compressor_enabled = False
         if pressure_switch_channel > 0 and compressor_relay_channel > 0:
-            self.compressor_ = wpilib.Compressor(pressure_switch_channel, compressor_relay_channel)
-            if self.compressor_:
+            self._compressor = wpilib.Compressor(pressure_switch_channel, compressor_relay_channel)
+            if self._compressor:
                 self.compressor_enabled = True
 
         self.piston_enabled = False
         if solenoid_channel > 0:
-            self.piston_ = wpilib.Solenoid(solenoid_channel)
-            if self.piston_:
+            self._piston = wpilib.Solenoid(solenoid_channel)
+            if self._piston:
                 self.piston_enabled = True
 
         if self.compressor_enabled and self.solenoid_enabled:
@@ -154,34 +198,43 @@ class Feeder(object):
         else:
             self.feeder_enabled = False
 
-        if self.log_enabled_:
+        if self._log_enabled:
             if self.compressor_enabled:
-                self.log_.write_line("Compressor enabled")
+                self._log.write_line("Compressor enabled")
             else:
-                self.log_.write_line("Compressor disabled")
+                self._log.write_line("Compressor disabled")
             if self.solenoid_enabled:
-                self.log_.write_line("Solenoid enabled")
+                self._log.write_line("Solenoid enabled")
             else:
-                self.log_.write_line("Solenoid disabled")
+                self._log.write_line("Solenoid disabled")
             if self.feeder_enabled:
-                self.log_.write_line("Feeder enabled")
+                self._log.write_line("Feeder enabled")
             else:
-                self.log_.write_line("Feeder disabled")
+                self._log.write_line("Feeder disabled")
 
         return parameters_read
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
     def set_robot_state(self, state):
-        self.robot_state_ = state
+        """Summary.
+
+        Full description and notes.
+
+        Args:
+            asdf: desc (default 0)
+
+        Returns:
+            Description.
+
+        Raises:
+            Exceptions.
+
+        """
+        self._robot_state = state
 
         # Make sure the compressor is running in every state
         if self.compressor_enabled_:
             if not self.compressor_.Enabled():
-                self.compressor_.Start()
+                self._compressor.Start()
 
         if state == ProgramState.disabled:
             pass
@@ -190,23 +243,41 @@ class Feeder(object):
         if state == ProgramState.autonomous:
             pass
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
     def set_log_state(self, state):
-        if state and self.log_:
-            self.log_enabled_ = True
-        else:
-            self.log_enabled_ = False
+        """Summary.
 
-    ## Short method description
-    #
-    #  Long description
-    #
-    # @param param Param description
+        Full description and notes.
+
+        Args:
+            asdf: desc (default 0)
+
+        Returns:
+            Description.
+
+        Raises:
+            Exceptions.
+
+        """
+        if state and self._log:
+            self._log_enabled = True
+        else:
+            self._log_enabled = False
+
     def set_piston(self, state):
+        """Summary.
+
+        Full description and notes.
+
+        Args:
+            asdf: desc (default 0)
+
+        Returns:
+            Description.
+
+        Raises:
+            Exceptions.
+
+        """
         if self.feeder_enabled_ and self.solenoid_enabled_:
-            self.piston_.Set(state)
+            self._piston.Set(state)
 
