@@ -32,7 +32,7 @@ class Feeder(object):
     # Private member variables
     _log_enabled = False
     _parameters_file = None
-    _robot_state = common.ProgramState.disabled
+    _robot_state = common.ProgramState.DISABLED
 
     def __init__(self):
         """Create and initialize a frisbee feeder.
@@ -120,7 +120,7 @@ class Feeder(object):
 
         # Initialize private member variables
         self._log_enabled = False
-        self._robot_state = common.ProgramState.disabled
+        self._robot_state = common.ProgramState.DISABLED
 
         # Create a new data log object
         self._log = datalog.DataLog("feeder.log")
@@ -228,11 +228,11 @@ class Feeder(object):
             if not self.compressor_.Enabled():
                 self._compressor.Start()
 
-        if state == common.ProgramState.disabled:
+        if state == common.ProgramState.DISABLED:
             pass
-        if state == common.ProgramState.teleop:
+        if state == common.ProgramState.TELEOP:
             pass
-        if state == common.ProgramState.autonomous:
+        if state == common.ProgramState.AUTONOMOUS:
             pass
 
     def set_log_state(self, state):

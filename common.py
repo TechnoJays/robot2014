@@ -7,20 +7,20 @@ class Direction:
     front.
 
     Attributes:
-        left.
-        right.
-        forward.
-        backward.
-        up.
-        down.
+        LEFT.
+        RIGHT.
+        FORWARD.
+        BACKWARD.
+        UP.
+        DOWN.
 
     """
-    left = 1
-    right = 2
-    forward = 3
-    backward = 4
-    up = 5
-    down = 6
+    LEFT = 1
+    RIGHT = 2
+    FORWARD = 3
+    BACKWARD = 4
+    UP = 5
+    DOWN = 6
 
 class ProgramState:
     """Enumerates robot game states.
@@ -29,11 +29,11 @@ class ProgramState:
     provided by the playing field (FMS).
 
     Attributes:
-        disabled.
-        autonomous.
-        teleop.
+        DISABLED.
+        AUTONOMOUS.
+        TELEOP.
 
     """
-    disabled = 1
-    autonomous = 2
-    teleop = 3
+    DISABLED = 1
+    AUTONOMOUS = 2
+    TELEOP = 3
