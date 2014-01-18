@@ -91,7 +91,6 @@ class Feeder(object):
         self._parameters = None
         self._compressor = None
         self._piston = None
-        return
 
     def _initialize(self, parameters, logging_enabled):
         """Initialize and configure a Feeder object.
@@ -122,14 +121,15 @@ class Feeder(object):
         self._log_enabled = False
         self._robot_state = common.ProgramState.DISABLED
 
-        # Create a new data log object
-        self._log = datalog.DataLog("feeder.log")
-
         # Enable logging if specified
-        if self._log and self._log.file_opened:
-            self._log_enabled = logging_enabled
-        else:
-            self._log_enabled = False
+        if logging_enabled:
+            # Create a new data log object
+            self._log = datalog.DataLog("feeder.log")
+
+            if self._log and self._log.file_opened:
+                self._log_enabled = True
+            else:
+                self._log = None
 
         # Read parameters file
         self._parameters_file = parameters
