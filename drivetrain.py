@@ -34,9 +34,9 @@ class DriveTrain(object):
 
     # Private parameters
     _normal_linear_speed_ratio = 0
-    _turbo_linear_speed_ratio = 0
+    _alternate_linear_speed_ratio = 0
     _normal_turning_speed_ratio = 0
-    _turbo_turning_speed_ratio = 0
+    _alternate_turning_speed_ratio = 0
     _auto_far_linear_speed_ratio = 0
     _auto_medium_linear_speed_ratio = 0
     _auto_near_linear_speed_ratio = 0
@@ -167,9 +167,9 @@ class DriveTrain(object):
 
         # Initialize private parameters
         self._normal_linear_speed_ratio = 1.0;
-        self._turbo_linear_speed_ratio = 1.0;
+        self._alternate_linear_speed_ratio = 1.0;
         self._normal_turning_speed_ratio = 1.0;
-        self._turbo_turning_speed_ratio = 1.0;
+        self._alternate_turning_speed_ratio = 1.0;
         self._auto_far_linear_speed_ratio = 1.0;
         self._auto_medium_linear_speed_ratio = 1.0;
         self._auto_near_linear_speed_ratio = 1.0;
@@ -288,9 +288,9 @@ class DriveTrain(object):
             self._left_direction = self._parameters.get_value("LEFT_DIRECTION")
             self._right_direction = self._parameters.get_value("RIGHT_DIRECTION")
             self._normal_linear_speed_ratio = self._parameters.get_value("NORMAL_LINEAR_SPEED_RATIO")
-            self._turbo_linear_speed_ratio = self._parameters.get_value("TURBO_LINEAR_SPEED_RATIO")
+            self._alternate_linear_speed_ratio = self._parameters.get_value("ALTERNATE_LINEAR_SPEED_RATIO")
             self._normal_turning_speed_ratio = self._parameters.get_value("NORMAL_TURNING_SPEED_RATIO")
-            self._turbo_turning_speed_ratio = self._parameters.get_value("TURBO_TURNING_SPEED_RATIO")
+            self._alternate_turning_speed_ratio = self._parameters.get_value("ALTERNATE_TURNING_SPEED_RATIO")
             self._auto_far_linear_speed_ratio = self._parameters.get_value("AUTO_FAR_LINEAR_SPEED_RATIO")
             self._auto_medium_linear_speed_ratio = self._parameters.get_value("AUTO_MEDIUM_LINEAR_SPEED_RATIO")
             self._auto_near_linear_speed_ratio = self._parameters.get_value("AUTO_NEAR_LINEAR_SPEED_RATIO")
@@ -370,12 +370,24 @@ class DriveTrain(object):
         """
         self._robot_state = state
 
+        # Stop the movement timer
+        if self._timer:
+            #self._timer.? #TODO
+
+        # Stop the acceleration timer and reset distance traveled
+        if self.accelerometer_enabled:
+            if self._accelerometer_timer:
+                #self._accelerometer_timer.? #TODO
+                #self._accelerometer_timer.? #TODO
+                #self._accelerometer_timer.? #TODO
+            self._distance_traveled = 0.0
+
         if state == common.ProgramState.DISABLED:
-            pass
+            self._robot_drive.SetSafetyEnabled(True)
         if state == common.ProgramState.TELEOP:
-            pass
+            self._robot_drive.SetSafetyEnabled(True)
         if state == common.ProgramState.AUTONOMOUS:
-            pass
+            self._robot_drive.SetSafetyEnabled(False)
 
     def set_log_state(self, state):
         """Set the logging state for this object.
@@ -390,28 +402,368 @@ class DriveTrain(object):
             self._log_enabled = False
 
     def read_sensors(self):
+        """Read and store current sensor values.
+
+        Reads the gyro angle to get the robots heading and the accelerometer to get
+        the acceleration in the forward/backward direction of the robot.  Distance
+        traveled is calculated by multiplying the acceleration value by time squared.
+
+        """
+        loop_time = 0.0
+
+        if self.gyro_enabled:
+            self._gyro_angle = self._gyro.GetAngle()
+
+        if self.acceleromter_enabled:
+            self._acceleration = self._accelerometer.GetAcceleration(self._accelerometer_axis)
+            if self._acceleration_timer:
+                #loop_time = self._acceleration_timer.? #TODO
+                #self._acceleration_timer.? #TODO
+                self._distance_traveled += (self._acceleration * loop_time * loop_time)
 
     def reset_sensors(self):
+        """Reset sensors.
+
+        Resets the gyro and accelerometer.  Also resets the distance traveled.
+        """
+        if self.gyro_enabled:
+            self._gyro.Reset()
+        if self.accelerometer_enabled:
+            self._accelerometer.Reset()
+            self._distance_traveled = 0.0
 
     def reset_and_start_timer(self):
+        """Resets and restarts the timer for time based movement."""
+        if self._timer:
+            #self._timer.? #TODO
+            #self._timer.? #TODO
+            #self._timer.? #TODO
 
     def get_current_state(self):
+        """Return a string containing sensor and status variables.
+
+        Returns:
+            A string with the gyro angle, acceleration value, and distance traveled.
+        """
+        #return #TODO
 
     def log_current_state(self):
+        """Log sensor and status variables."""
+        if self._log:
+            if self.gyro_enabled:
+                self._log.WriteValue("Gyro angle", self._gyro_angle, True)
+            if self.accelerometer_enabled:
+                self._log.WriteValue("Acceleration", self._acceleration, True)
+                self._log.WriteValue("Distance traveled", self._distance_traveled, True)
 
     def adjust_heading(self, adjustment, speed):
+        """Turns left/right to adjust robot heading.
+
+        Using the gyro to keep track of the current heading, turns the robot until it is
+        facing the previous heading plus/minus the adjustment.
+
+        Args:
+            adjustment: the heading adjustment in degrees.
+            speed: the motor speed ratio used while turning.
+
+        Returns:
+            True when the new heading has been reached.
+        """
+        # Abort if robot drive or gyro is not available
+        if not self._robot_drive or not self.gyro_enabled:
+            self._adjustment_in_progress = False
+            return True
+
+        # If this is the first time the iterative method is called, store the initial heading
+        if not self._adjustment_in_progress:
+            self._initial_heading = self._gyro_angle
+            self._adjustment_in_progress = True
+
+        # Calculate the amount of adjustment remaining
+        angle_remaining = (self._initial_heading + adjustment) - self._gyro_angle
+
+        # Determine the turn direction
+        turn_direction = 0
+        if angle_remaining < 0:
+            turn_direction = self._left_direction
+        else:
+            turn_direction = self._right_direction
+
+        # Check if we've reached the desired heading (within tolerance)
+        #if ?(angle_remaining) < self._heading_threshold: #TODO
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            self._adjustment_in_progress = False
+            return True
+        else:
+            #if ?(angle_remaining) > self._auto_far_heading_threshold: #TODO
+                turn_direction = turn_direction * speed * self._auto_far_turning_speed_ratio
+            #else if ?(angle_remaining) > self._auto_medium_heading_threshold: #TODO
+                turn_direction = turn_direction * speed * self._auto_medium_turning_speed_ratio
+            else:
+                turn_direction = turn_direction * speed * self._auto_near_turning_speed_ratio
+            self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
+
+        return False
 
     def drive_distance(self, distance, speed):
+        """Drives forward/backward a specified distance.
+
+        Using the accelerometer to calculate distance traveled, drives the robot forward or
+        backward until the distance traveled is within tolerance of the desired distance.
+
+        Args:
+            distance: the distance in meters with a negative value meaning backwards.
+            speed: the motor speed ratio used while driving.
+
+        Returns:
+            True when the desired distance has been reached
+        """
+        # Abort if robot drive or accelerometer is not available
+        if not self._robot_drive or not self.accelerometer_enabled:
+            return True
+
+        # Determine if robot should drive forward or backward
+        directional_multiplier = 0
+        if distance > 0:
+            directional_multiplier = self._forward_direction
+        else:
+            directional_multiplier = self._backward_direction
+
+        # Calculate distance left to drive
+        distance_left = ?(distance) - ?(self._distance_traveled)
+
+        # Check if we've reached the distance
+        if distance_left < self._distance_threshold:
+            # Stop driving
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            return True
+        else:
+            if distance_left > self._auto_far_distance_threshold:
+                directional_multiplier = directional_multiplier * speed * self._auto_far_linear_speed_ratio
+            else if distance_left > self._auto_medium_distance_threshold:
+                directional_multiplier = directional_multiplier * speed * self._auto_medium_linear_speed_ratio
+            else:
+                directional_multiplier = directional_multiplier * speed * self._auto_near_linear_speed_ratio
+            self._robot_drive.ArcadeDrive(directional_multiplier, 0.0, False)
+
+        return False
 
     def drive_time(self, time, direction, speed):
+        """Drives forward/backward for a time duration.
 
-    def drive(self, directional_speed, directional_turn, turbo):
+        Using a timer, drives the robot forward or backward for a certain time duration.
 
-    def tank_drive(self, left_stick, right_stick, turbo):
+        Args:
+            time: the amount of time to drive.
+            direction: the direction to drive.
+            speed: the motor speed ratio.
+
+        Returns:
+            True when the time duration has been reached.
+        """
+        # Abort if the robot drive or timer is not available
+        if not self._robot_drive or not self._timer:
+            return True
+
+        # Get the timer value since we started moving
+        elapsed_time = self._timer.? #TODO
+
+        # Calculate time left to move
+        time_left = time - elapsed_time
+
+        # Check if we've reached the time duration
+        if time_left < self._time_threshold or time_left < 0:
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            self._timer.? #TODO
+            return True
+        else:
+            directional_speed = 0
+            if direction == common.Direction.FORWARD:
+                directional_speed = self._forward_direction
+            else:
+                directional_speed = self._backward_direction
+
+            if time_left > self._auto_far_time_threshold:
+                directional_speed = directional_speed * speed * self._auto_far_linear_speed_ratio
+            else if time_left > self._auto_medium_time_threshold:
+                directional_speed = directional_speed * speed * self._auto_medium_linear_speed_ratio
+            else:
+                directional_speed = directional_speed * speed * self._auto_near_linear_speed_ratio
+            self._robot_drive.ArcadeDrive(directional_speed, 0.0, False)
+
+        return False
+
+    def drive(self, directional_speed, directional_turn, alternate):
+        """Drives the robot using a specified linear and turning speed.
+
+        This method is used in manual/teleop driving mode, where the forward/backward and
+        left/right values are obtained from the driver controls.
+
+        Args:
+            directional_speed: the speed and direction for linear driving forward/backward.
+            directional_turn: the speed and direction for turning left/right.
+            alternate: True if the robot should move at 'alternate' speed.
+        """
+        # Abort if the robot drive is not available
+        if not self._robot_drive:
+            return
+
+        linear = 0.0
+        turn = 0.0
+        # Determine the actual speed using normal/alternate speed ratios
+        if alternate:
+            linear = self._alternate_linear_speed_ratio * directional_speed
+            turn = self._alternate_turning_speed_ratio * directional_turn
+        else:
+            linear = self._normal_linear_speed_ratio * directional_speed
+            turn = self._normal_turning_speed_ratio * directional_turn
+
+        # Smooth the robot acceleration/deceleration.
+        # This is used to prevent tipping or jerky movement, and may not be necessary
+        # depending on the robot design.
+        # Method 1: using a maximum amount of change per robot iterative cycle
+        if ?(linear - self._previous_linear_speed) > self._maximum_linear_speed_change: #TODO
+            if (linear - self._previous_linear_speed) < 0:
+                linear = self._previous_linear_speed - self._maximum_linear_speed_change
+            else:
+                linear = self._previous_linear_speed + self._maximum_linear_speed_change
+        if ?(turn - self._previous_turn_speed) > self._maximum_turn_speed_change: #TODO
+            if (turn - self._previous_turn_speed) < 0:
+                turn = self._previous_turn_speed - self._maximum_turn_speed_change
+            else
+                turn = self._previous_turn_speed + self._maximum_turn_speed_change
+
+        # Method 2: using a simple low pass filter
+        # new speed = target speed - K * (target speed - current speed)
+        # Where K should be around 0.8? (higher: slower rate of change)
+        #linear = linear - self._linear_filter_constant * (linear - self._previous_linear_speed)
+        #turn = turn - self._turn_filter_constant * (turn - self._previous_turn_speed)
+
+        self._robot_drive.ArcadeDrive(linear, turn, False)
+        self._previous_linear_speed = linear
+        self._previous_turn_speed = turn
+
+    def tank_drive(self, left_stick, right_stick, alternate):
+        """Drives the robot using left and right 'tank track' controls.
+
+        This is an alternate method used during manual/teleop driving mode, where each
+        side of the robot is controlled by a separate forward/backward control, like
+        tank tracks.
+
+        Args:
+            left_stick: the 'y' position of the left thumbstick to control the left track.
+            right_stick: the 'y' position of the right thumbstick to control the right track.
+            alternate: True if the robot should move at 'alternate' speed.
+        """
+        # Abort if the robot drive is not available
+        if not self._robot_drive:
+            return
+
+        # Determine the actual speed using the normal/alternate speed ratios
+        left = 0
+        right = 0
+        if alternate:
+            left = self._alternate_linear_speed_ratio * left_stick
+            right = self._alternate_linear_speed_ratio * right_stick
+        else:
+            left = self._normal_linear_speed_ratio * left_stick
+            right = self._normal_linear_speed_ratio * right_stick
+
+        self._robot_drive.TankDrive(left, right, False)
 
     def turn_heading(self, heading, speed):
+        """Turns the robot left/right to face a specified heading.
+
+        Using the gyro to keep track of the current heading, turns the robot until it is
+        facing the specified heading.
+
+        Args:
+            heading: the desired heading in degrees.
+            speed: the motor speed ratio used while turning.
+
+        Returns:
+            True when the new heading has been reached.
+        """
+        # Abort if the robot drive or gyro is not available
+        if not self._robot_drive or not self.gyro_enabled:
+            return True
+
+        # Calculate the amount left to turn
+        angle_remaining = heading - self._gyro_angle
+
+        # Determine the turn direction
+        turn_direction = 0
+        if angle_remaining < 0:
+            turn_direction = self._left_direction
+        else:
+            turn_direction = self._right_direction
+
+        # Check if we've reached the desired heading
+        if ?(angle_remaining) < self._heading_threshold: #TODO
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            return True
+        else:
+            if ?(angle_remaining) > self._auto_far_heading_threshold: #TODO
+                turn_direction = turn_direction * speed * self._auto_far_turning_ratio
+            else if ?(angle_remaining) > self._auto_medium_heading_threshold: #TODO
+                turn_direction = turn_direction * speed * self._auto_medium_turning_ratio
+            else:
+                turn_direction = turn_direction * speed * self._auto_near_turning_ratio
+            self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
+
+        return False
 
     def turn_time(self, time, direction, speed):
+        """Turns the robot left/right for a time duration.
+
+        Using a timer, turns the robot left or right for a certain time duration.
+
+        Args:
+            time: the amount of time to drive.
+            direction: the direction to turn.
+            speed: the motor speed ratio.
+
+        Returns:
+            True when the time duration has been reached.
+        """
+        # Abort if robot drive or timer is not available
+        if not self._robot_drive or not self._timer:
+            return True
+
+        # Get the timer value since we started moving
+        elapsed_time = self._timer.? #TODO
+
+        # Calculate time left to turn
+        time_left = time - elapsed_time
+
+        directional_speed = 0
+
+        # Check if we've turned long enough
+        if time_left < self._time_threshold or time_left < 0:
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            self._timer.? #TODO
+            return True
+        else:
+            if direction == common.Direction.LEFT:
+                directional_speed = self._left_direction
+            else:
+                directional_speed = self._right_direction
+
+            if time_left > self._auto_far_time_threshold:
+                directional_speed = directional_speed * speed * self._auto_far_turning_speed_ratio
+            else if time_left > self._auto_medium_time_threshold:
+                directional_speed = directional_speed * speed * self._auto_medium_turning_speed_ratio
+            else:
+                directional_speed = directional_speed * speed * self._auto_near_turning_speed_ratio
+            self._robot_drive.ArcadeDrive(0.0, directional_speed, False)
+
+        return False
 
     def get_heading(self):
+        """Returns the current heading of the robot.
+
+        Returns:
+            The current robot heading in degrees.
+        """
+        return self._gyro_angle
 
