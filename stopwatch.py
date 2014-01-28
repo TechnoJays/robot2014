@@ -34,6 +34,18 @@ class Stopwatch(object):
         self._secs = None
         self._msecs = None
 
+    def reset(self):
+        """Reset the timer to zero.
+
+        This doesn't stop the timer, but simply moves the starting
+        time to the current time and clears the end and elapses times.
+
+        """
+        self._start = time.time()
+        self._end = None
+        self._secs = None
+        self._msecs = None
+
     def stop(self):
         """Mark current time as ending time and calculate duration.
 
