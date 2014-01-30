@@ -1,3 +1,5 @@
+"""This module provides a disc feeder class."""
+
 # Imports
 import wpilib
 import common
@@ -14,7 +16,7 @@ class Feeder(object):
 
     Attributes:
         feeder_enabled: True if the feeder is fully functional (default False).
-        compressor_enabled: True if the compressor is functional (default False).
+        compressor_enabled: True if compressor is functional (default False).
         solenoid_enabled: True if the solenoid is functional (default False).
 
     """
@@ -34,48 +36,18 @@ class Feeder(object):
     _parameters_file = None
     _robot_state = common.ProgramState.DISABLED
 
-    def __init__(self):
-        """Create and initialize a frisbee feeder.
-
-        Instantiate a feeder using default values.
-
-        """
-        self._initialize("feeder.par", False)
-
-    def __init__(self, logging_enabled):
-        """Create and initialize a frisbee feeder.
-
-        Instantiate a feeder and specify if logging is enabled or disabled.
-
-        Args:
-            logging_enabled: True if logging should be enabled.
-
-        """
-        self._initialize("feeder.par", logging_enabled)
-
-    def __init__(self, parameters):
-        """Create and initialize a frisbee feeder.
-
-        Instantiate a feeder and specify a parameters file.
-
-        Args:
-            parameters: The parameters filename to use for Feeder configuration.
-
-        """
-        self._initialize(parameters, False)
-
-    def __init__(self, parameters, logging_enabled):
+    def __init__(self, params="feeder.par", logging_enabled=False):
         """Create and initialize a frisbee feeder.
 
         Instantiate a feeder and specify a parameters file and whether logging
         is enabled or disabled.
 
         Args:
-            parameters: The parameters filename to use for Feeder configuration.
+            params: The parameters filename to use for Feeder configuration.
             logging_enabled: True if logging should be enabled.
 
         """
-        self._initialize(parameters, logging_enabled)
+        self._initialize(params, logging_enabled)
 
     def dispose(self):
         """Dispose of a feeder object.
@@ -92,7 +64,7 @@ class Feeder(object):
         self._compressor = None
         self._piston = None
 
-    def _initialize(self, parameters, logging_enabled):
+    def _initialize(self, params, logging_enabled):
         """Initialize and configure a Feeder object.
 
         Initialize instance variables to defaults, read parameter values from
@@ -100,7 +72,7 @@ class Feeder(object):
         etc), and update status variables.
 
         Args:
-            parameters: The parameters filename to use for Feeder configuration.
+            params: The parameters filename to use for Feeder configuration.
             logging_enabled: True if logging should be enabled.
 
         """
@@ -132,7 +104,7 @@ class Feeder(object):
                 self._log = None
 
         # Read parameters file
-        self._parameters_file = parameters
+        self._parameters_file = params
         self.load_parameters()
 
     def load_parameters(self):
@@ -170,23 +142,27 @@ class Feeder(object):
 
         # Store parameters from the file to local variables
         if parameters_read:
-            pressure_switch_channel = self._parameters.get_value("PRESSURE_SWITCH_CHANNEL")
-            compressor_relay_channel = self._parameters.get_value("COMPRESSOR_RELAY_CHANNEL")
-            solenoid_channel = self._parameters.get_value("SOLENOID_CHANNEL")
+            pressure_switch_channel = self._parameters.get_value(
+                    "PRESSURE_SWITCH_CHANNEL")
+            compressor_relay_channel = self._parameters.get_value(
+                    "COMPRESSOR_RELAY_CHANNEL")
+            solenoid_channel = self._parameters.get_value(
+                    "SOLENOID_CHANNEL")
 
         # Create the compressor object if the channel is greater than 0
         self.compressor_enabled = False
         if pressure_switch_channel > 0 and compressor_relay_channel > 0:
-            self._compressor = wpilib.Compressor(pressure_switch_channel, compressor_relay_channel)
+            self._compressor = wpilib.Compressor(pressure_switch_channel,
+                    compressor_relay_channel)
             if self._compressor:
                 self.compressor_enabled = True
 
         # Create the solenoid object if the channel is greater than 0
-        self.piston_enabled = False
+        self.solenoid_enabled = False
         if solenoid_channel > 0:
             self._piston = wpilib.Solenoid(solenoid_channel)
             if self._piston:
-                self.piston_enabled = True
+                self.solenoid_enabled = True
 
         # If both the compressor and solenoid are enabled, the feeder is
         # fully functional
@@ -224,8 +200,8 @@ class Feeder(object):
         self._robot_state = state
 
         # Make sure the compressor is running in every state
-        if self.compressor_enabled_:
-            if not self.compressor_.Enabled():
+        if self.compressor_enabled:
+            if not self._compressor.Enabled():
                 self._compressor.Start()
 
         if state == common.ProgramState.DISABLED:
@@ -257,6 +233,6 @@ class Feeder(object):
             state: True if the piston is extended.
 
         """
-        if self.feeder_enabled_ and self.solenoid_enabled_:
+        if self.feeder_enabled and self.solenoid_enabled:
             self._piston.Set(state)
 

@@ -1,3 +1,5 @@
+"""This module provides a stopwatch timing class."""
+
 # Imports
 import time
 
@@ -50,8 +52,9 @@ class Stopwatch(object):
         """Mark current time as ending time and calculate duration.
 
         If the stopwatch has been started, mark the current time as the end time
-        and calculate the time difference between the start and end points in both
-        seconds and milliseconds.  If the stopwatch was never started, do nothing.
+        and calculate the time difference between the start and end points in
+        both seconds and milliseconds.  If the stopwatch was never started, do
+        nothing.
 
         """
         if self._running:
@@ -63,9 +66,9 @@ class Stopwatch(object):
     def elapsed_time_in_secs(self):
         """Return elapsed time in seconds.
 
-        Calculate the time difference between the start and end times in seconds.
-        If the stopwatch is currently running, the current time is used as the end
-        time.  If the stopwatch was never started, return None.
+        Calculate the time difference between the start and end times in
+        seconds. If the stopwatch is currently running, the current time is used
+        as the end time.  If the stopwatch was never started, return None.
 
         """
         if self._running:
@@ -73,19 +76,20 @@ class Stopwatch(object):
         if self._start and self._end:
             self._secs = self._end - self._start
         return self._secs
-        
+
     def elapsed_time_in_msecs(self):
         """Return elapsed time in milliseconds.
 
-        Calculate the time difference between the start and end times in milliseconds.
-        If the stopwatch is currently running, the current time is used as the end
-        time.  If the stopwatch was never started, return None.
+        Calculate the time difference between the start and end times in
+        milliseconds.  If the stopwatch is currently running, the current time
+        is used as the end time.  If the stopwatch was never started,
+        return None.
 
         """
         if self._running:
             self._end = time.time()
         if self._start and self._end:
             self._secs = self._end - self._start
-            self.m_secs = self._secs * 1000
+            self._msecs = self._secs * 1000
         return self._msecs
 

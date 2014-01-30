@@ -1,3 +1,5 @@
+"""This module blah blah."""
+
 # Imports
 import wpilib
 import common
@@ -25,48 +27,18 @@ class Class(object):
     _parameters_file = None
     _robot_state = common.ProgramState.DISABLED
 
-    def __init__(self):
-        """Create and initialize a Class.
-
-        Instantiate a Class using default values.
-
-        """
-        self._initialize("parameters.par", False)
-
-    def __init__(self, logging_enabled):
-        """Create and initialize a Class.
-
-        Instantiate a Class and specify if logging is enabled or disabled.
-
-        Args:
-            logging_enabled: True if logging should be enabled.
-
-        """
-        self._initialize("parameters.par", logging_enabled)
-
-    def __init__(self, parameters):
-        """Create and initialize a Class.
-
-        Instantiate a Class and specify a parameters file.
-
-        Args:
-            parameters: The parameters filename to use for configuration.
-
-        """
-        self._initialize(parameters, False)
-
-    def __init__(self, parameters, logging_enabled):
+    def __init__(self, params="parameters.par", logging_enabled=False):
         """Create and initialize a Class.
 
         Instantiate a Class and specify a parameters file and whether logging
         is enabled or disabled.
 
         Args:
-            parameters: The parameters filename to use for configuration.
+            params: The parameters filename to use for configuration.
             logging_enabled: True if logging should be enabled.
 
         """
-        self._initialize(parameters, logging_enabled)
+        self._initialize(params, logging_enabled)
 
     def dispose(self):
         """Dispose of a Class object.
@@ -81,7 +53,7 @@ class Class(object):
         self._log = None
         self._parameters = None
 
-    def _initialize(self, parameters, logging_enabled):
+    def _initialize(self, params, logging_enabled):
         """Initialize and configure a Class object.
 
         Initialize instance variables to defaults, read parameter values from
@@ -89,7 +61,7 @@ class Class(object):
         variables.
 
         Args:
-            parameters: The parameters filename to use for configuration.
+            params: The parameters filename to use for configuration.
             logging_enabled: True if logging should be enabled.
 
         """
@@ -117,7 +89,7 @@ class Class(object):
                 self._log = None
 
         # Read parameters file
-        self._parameters_file = parameters
+        self._parameters_file = params
         self.load_parameters()
 
     def load_parameters(self):

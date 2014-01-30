@@ -1,3 +1,5 @@
+"""This module provides a robot drivetrain class."""
+
 # Imports
 import math
 
@@ -16,8 +18,10 @@ class DriveTrain(object):
     the use of sensors to faciliatate driving.
 
     Attributes:
-        drivetrain_enabled: True if the DriveTrain is fully functional (default False).
-        accelerometer_enabled: True if the Accelerometer is fully functional (default False).
+        drivetrain_enabled: True if the DriveTrain is fully functional
+            (default False).
+        accelerometer_enabled: True if the Accelerometer is fully functional
+            (default False).
         gyro_enabled: True if the Gyro is fully functional (default False).
 
     """
@@ -79,54 +83,24 @@ class DriveTrain(object):
     _previous_turn_speed = 0
     _adjustment_in_progress = False
 
-    def __init__(self):
+    def __init__(self, params="drivetrain.par", logging_enabled=False):
         """Create and initialize a DriveTrain.
 
-        Instantiate a DriveTrain using default values.
-
-        """
-        self._initialize("parameters.par", False)
-
-    def __init__(self, logging_enabled):
-        """Create and initialize a DriveTrain.
-
-        Instantiate a DriveTrain and specify if logging is enabled or disabled.
+        Instantiate a DriveTrain and specify a parameters file and whether
+        logging is enabled or disabled.
 
         Args:
+            params: The parameters filename to use for configuration.
             logging_enabled: True if logging should be enabled.
 
         """
-        self._initialize("parameters.par", logging_enabled)
-
-    def __init__(self, parameters):
-        """Create and initialize a DriveTrain.
-
-        Instantiate a DriveTrain and specify a parameters file.
-
-        Args:
-            parameters: The parameters filename to use for configuration.
-
-        """
-        self._initialize(parameters, False)
-
-    def __init__(self, parameters, logging_enabled):
-        """Create and initialize a DriveTrain.
-
-        Instantiate a DriveTrain and specify a parameters file and whether logging
-        is enabled or disabled.
-
-        Args:
-            parameters: The parameters filename to use for configuration.
-            logging_enabled: True if logging should be enabled.
-
-        """
-        self._initialize(parameters, logging_enabled)
+        self._initialize(params, logging_enabled)
 
     def dispose(self):
         """Dispose of a DriveTrain object.
 
-        Dispose of a DriveTrain object when it is no longer required by closing an
-        open log file if it exists, and removing references to any internal
+        Dispose of a DriveTrain object when it is no longer required by closing
+        an open log file if it exists, and removing references to any internal
         objects.
 
         """
@@ -142,7 +116,7 @@ class DriveTrain(object):
         self._movement_timer = None
         self._acceleration_timer = None
 
-    def _initialize(self, parameters, logging_enabled):
+    def _initialize(self, params, logging_enabled):
         """Initialize and configure a DriveTrain object.
 
         Initialize instance variables to defaults, read parameter values from
@@ -150,7 +124,7 @@ class DriveTrain(object):
         variables.
 
         Args:
-            parameters: The parameters filename to use for configuration.
+            params: The parameters filename to use for configuration.
             logging_enabled: True if logging should be enabled.
 
         """
@@ -171,34 +145,34 @@ class DriveTrain(object):
         self._movement_timer = None
 
         # Initialize private parameters
-        self._normal_linear_speed_ratio = 1.0;
-        self._alternate_linear_speed_ratio = 1.0;
-        self._normal_turning_speed_ratio = 1.0;
-        self._alternate_turning_speed_ratio = 1.0;
-        self._auto_far_linear_speed_ratio = 1.0;
-        self._auto_medium_linear_speed_ratio = 1.0;
-        self._auto_near_linear_speed_ratio = 1.0;
-        self._auto_far_turning_speed_ratio = 1.0;
-        self._auto_medium_turning_speed_ratio = 1.0;
-        self._auto_near_turning_speed_ratio = 1.0;
-        self._auto_medium_time_threshold = 0.5;
-        self._auto_far_time_threshold = 1.0;
-        self._auto_medium_distance_threshold = 2.0;
-        self._auto_far_distance_threshold = 5.0;
-        self._auto_medium_heading_threshold = 15.0;
-        self._auto_far_heading_threshold = 25.0;
-        self._distance_threshold = 0.5;
-        self._heading_threshold = 3.0;
-        self._time_threshold = 0.1;
-        self._forward_direction = 1.0;
-        self._backward_direction = -1.0;
-        self._left_direction = -1.0;
-        self._right_direction = 1.0;
-        self._accelerometer_axis = 0;
-        self._maximum_linear_speed_change = 0.0;
-        self._maximum_turn_speed_change = 0.0;
-        self._linear_filter_constant = 0.0;
-        self._turn_filter_constant = 0.0;
+        self._normal_linear_speed_ratio = 1.0
+        self._alternate_linear_speed_ratio = 1.0
+        self._normal_turning_speed_ratio = 1.0
+        self._alternate_turning_speed_ratio = 1.0
+        self._auto_far_linear_speed_ratio = 1.0
+        self._auto_medium_linear_speed_ratio = 1.0
+        self._auto_near_linear_speed_ratio = 1.0
+        self._auto_far_turning_speed_ratio = 1.0
+        self._auto_medium_turning_speed_ratio = 1.0
+        self._auto_near_turning_speed_ratio = 1.0
+        self._auto_medium_time_threshold = 0.5
+        self._auto_far_time_threshold = 1.0
+        self._auto_medium_distance_threshold = 2.0
+        self._auto_far_distance_threshold = 5.0
+        self._auto_medium_heading_threshold = 15.0
+        self._auto_far_heading_threshold = 25.0
+        self._distance_threshold = 0.5
+        self._heading_threshold = 3.0
+        self._time_threshold = 0.1
+        self._forward_direction = 1.0
+        self._backward_direction = -1.0
+        self._left_direction = -1.0
+        self._right_direction = 1.0
+        self._accelerometer_axis = 0
+        self._maximum_linear_speed_change = 0.0
+        self._maximum_turn_speed_change = 0.0
+        self._linear_filter_constant = 0.0
+        self._turn_filter_constant = 0.0
 
         # Initialize private member variables
         self._log_enabled = False
@@ -225,7 +199,7 @@ class DriveTrain(object):
         self._movement_timer = stopwatch.Stopwatch()
 
         # Read parameters file
-        self._parameters_file = parameters
+        self._parameters_file = params
         self.load_parameters()
 
     def load_parameters(self):
@@ -270,57 +244,93 @@ class DriveTrain(object):
 
         if self._log_enabled:
             if parameters_read:
-                self._log.write_line("DriveTrain parameters loaded successfully")
+                self._log.write_line(
+                        "DriveTrain parameters loaded successfully")
             else:
                 self._log.write_line("Failed to read DriveTrain parameters")
 
         # Store parameters from the file to local variables
         if parameters_read:
             left_motor_slot = self._parameters.get_value("LEFT_MOTOR_SLOT")
-            left_motor_channel = self._parameters.get_value("LEFT_MOTOR_CHANNEL")
-            left_motor_inverted = self._parameters.get_value("LEFT_MOTOR_INVERTED")
-            right_motor_slot = self._parameters.get_value("RIGHT_MOTOR_SLOT")
-            right_motor_channel = self._parameters.get_value("RIGHT_MOTOR_CHANNEL")
-            right_motor_inverted = self._parameters.get_value("RIGHT_MOTOR_INVERTED")
-            motor_safety_timeout = self._parameters.get_value("MOTOR_SAFETY_TIMEOUT")
-            accelerometer_slot = self._parameters.get_value("ACCELEROMETER_SLOT")
-            accelerometer_range = self._parameters.get_value("ACCELEROMETER_RANGE")
-            self._accelerometer_axis = self._parameters.get_value("ACCELEROMETER_AXIS")
+            left_motor_channel = self._parameters.get_value(
+                    "LEFT_MOTOR_CHANNEL")
+            left_motor_inverted = self._parameters.get_value(
+                    "LEFT_MOTOR_INVERTED")
+            right_motor_slot = self._parameters.get_value(
+                    "RIGHT_MOTOR_SLOT")
+            right_motor_channel = self._parameters.get_value(
+                    "RIGHT_MOTOR_CHANNEL")
+            right_motor_inverted = self._parameters.get_value(
+                    "RIGHT_MOTOR_INVERTED")
+            motor_safety_timeout = self._parameters.get_value(
+                    "MOTOR_SAFETY_TIMEOUT")
+            accelerometer_slot = self._parameters.get_value(
+                    "ACCELEROMETER_SLOT")
+            accelerometer_range = self._parameters.get_value(
+                    "ACCELEROMETER_RANGE")
+            self._accelerometer_axis = self._parameters.get_value(
+                    "ACCELEROMETER_AXIS")
             gyro_channel = self._parameters.get_value("GYRO_CHANNEL")
             gyro_sensitivity = self._parameters.get_value("GYRO_SENSITIVITY")
-            self._forward_direction = self._parameters.get_value("FORWARD_DIRECTION")
-            self._backward_direction = self._parameters.get_value("BACKWARD_DIRECTION")
+            self._forward_direction = self._parameters.get_value(
+                    "FORWARD_DIRECTION")
+            self._backward_direction = self._parameters.get_value(
+                    "BACKWARD_DIRECTION")
             self._left_direction = self._parameters.get_value("LEFT_DIRECTION")
-            self._right_direction = self._parameters.get_value("RIGHT_DIRECTION")
-            self._normal_linear_speed_ratio = self._parameters.get_value("NORMAL_LINEAR_SPEED_RATIO")
-            self._alternate_linear_speed_ratio = self._parameters.get_value("ALTERNATE_LINEAR_SPEED_RATIO")
-            self._normal_turning_speed_ratio = self._parameters.get_value("NORMAL_TURNING_SPEED_RATIO")
-            self._alternate_turning_speed_ratio = self._parameters.get_value("ALTERNATE_TURNING_SPEED_RATIO")
-            self._auto_far_linear_speed_ratio = self._parameters.get_value("AUTO_FAR_LINEAR_SPEED_RATIO")
-            self._auto_medium_linear_speed_ratio = self._parameters.get_value("AUTO_MEDIUM_LINEAR_SPEED_RATIO")
-            self._auto_near_linear_speed_ratio = self._parameters.get_value("AUTO_NEAR_LINEAR_SPEED_RATIO")
-            self._auto_far_turning_speed_ratio = self._parameters.get_value("AUTO_FAR_TURNING_SPEED_RATIO")
-            self._auto_medium_turning_speed_ratio = self._parameters.get_value("AUTO_MEDIUM_TURNING_SPEED_RATIO")
-            self._auto_near_turning_speed_ratio = self._parameters.get_value("AUTO_NEAR_TURNING_SPEED_RATIO")
-            self._distance_threshold = self._parameters.get_value("DISTANCE_THRESHOLD")
-            self._heading_threshold = self._parameters.get_value("HEADING_THRESHOLD")
+            self._right_direction = self._parameters.get_value(
+                    "RIGHT_DIRECTION")
+            self._normal_linear_speed_ratio = self._parameters.get_value(
+                    "NORMAL_LINEAR_SPEED_RATIO")
+            self._alternate_linear_speed_ratio = self._parameters.get_value(
+                    "ALTERNATE_LINEAR_SPEED_RATIO")
+            self._normal_turning_speed_ratio = self._parameters.get_value(
+                    "NORMAL_TURNING_SPEED_RATIO")
+            self._alternate_turning_speed_ratio = self._parameters.get_value(
+                    "ALTERNATE_TURNING_SPEED_RATIO")
+            self._auto_far_linear_speed_ratio = self._parameters.get_value(
+                    "AUTO_FAR_LINEAR_SPEED_RATIO")
+            self._auto_medium_linear_speed_ratio = self._parameters.get_value(
+                    "AUTO_MEDIUM_LINEAR_SPEED_RATIO")
+            self._auto_near_linear_speed_ratio = self._parameters.get_value(
+                    "AUTO_NEAR_LINEAR_SPEED_RATIO")
+            self._auto_far_turning_speed_ratio = self._parameters.get_value(
+                    "AUTO_FAR_TURNING_SPEED_RATIO")
+            self._auto_medium_turning_speed_ratio = self._parameters.get_value(
+                    "AUTO_MEDIUM_TURNING_SPEED_RATIO")
+            self._auto_near_turning_speed_ratio = self._parameters.get_value(
+                    "AUTO_NEAR_TURNING_SPEED_RATIO")
+            self._distance_threshold = self._parameters.get_value(
+                    "DISTANCE_THRESHOLD")
+            self._heading_threshold = self._parameters.get_value(
+                    "HEADING_THRESHOLD")
             self._time_threshold = self._parameters.get_value("TIME_THRESHOLD")
-            self._auto_medium_time_threshold = self._parameters.get_value("AUTO_MEDIUM_TIME_THRESHOLD")
-            self._auto_far_time_threshold = self._parameters.get_value("AUTO_FAR_TIME_THRESHOLD")
-            self._auto_medium_distance_threshold = self._parameters.get_value("AUTO_MEDIUM_DISTANCE_THRESHOLD")
-            self._auto_far_distance_threshold = self._parameters.get_value("AUTO_FAR_DISTANCE_THRESHOLD")
-            self._auto_medium_heading_threshold = self._parameters.get_value("AUTO_MEDIUM_HEADING_THRESHOLD")
-            self._auto_far_heading_threshold = self._parameters.get_value("AUTO_FAR_HEADING_THRESHOLD")
-            self._maximum_linear_speed_change = self._parameters.get_value("MAXIMUM_LINEAR_SPEED_CHANGE")
-            self._maximum_turn_speed_change = self._parameters.get_value("MAXIMUM_TURN_SPEED_CHANGE")
-            self._linear_filter_constant = self._parameters.get_value("LINEAR_FILTER_CONSTANT")
-            self._turn_filter_constant = self._parameters.get_value("TURN_FILTER_CONSTANT")
+            self._auto_medium_time_threshold = self._parameters.get_value(
+                    "AUTO_MEDIUM_TIME_THRESHOLD")
+            self._auto_far_time_threshold = self._parameters.get_value(
+                    "AUTO_FAR_TIME_THRESHOLD")
+            self._auto_medium_distance_threshold = self._parameters.get_value(
+                    "AUTO_MEDIUM_DISTANCE_THRESHOLD")
+            self._auto_far_distance_threshold = self._parameters.get_value(
+                    "AUTO_FAR_DISTANCE_THRESHOLD")
+            self._auto_medium_heading_threshold = self._parameters.get_value(
+                    "AUTO_MEDIUM_HEADING_THRESHOLD")
+            self._auto_far_heading_threshold = self._parameters.get_value(
+                    "AUTO_FAR_HEADING_THRESHOLD")
+            self._maximum_linear_speed_change = self._parameters.get_value(
+                    "MAXIMUM_LINEAR_SPEED_CHANGE")
+            self._maximum_turn_speed_change = self._parameters.get_value(
+                    "MAXIMUM_TURN_SPEED_CHANGE")
+            self._linear_filter_constant = self._parameters.get_value(
+                    "LINEAR_FILTER_CONSTANT")
+            self._turn_filter_constant = self._parameters.get_value(
+                    "TURN_FILTER_CONSTANT")
 
 
         # Check if the accelerometer is present/enabled
         self.accelerometer_enabled = False
         if accelerometer_slot > 0 and accelerometer_range >= 0:
-            self._accelerometer = wpilib.ADXL345_I2C(accelerometer_slot, accelerometer_range)
+            self._accelerometer = wpilib.ADXL345_I2C(accelerometer_slot,
+                    accelerometer_range)
             if self._accelerometer:
                 self.accelerometer_enabled = True
                 self._acceleration_timer = stopwatch.Stopwatch()
@@ -335,21 +345,26 @@ class DriveTrain(object):
 
         # Create motor controllers
         if left_motor_slot > 0 and left_motor_channel > 0:
-            self._left_controller = wpilib.Jaguar(left_motor_slot, left_motor_channel)
+            self._left_controller = wpilib.Jaguar(left_motor_slot,
+                    left_motor_channel)
         if right_motor_slot > 0 and right_motor_channel > 0:
-            self._right_controller = wpilib.Jaguar(right_motor_slot, right_motor_channel)
+            self._right_controller = wpilib.Jaguar(right_motor_slot,
+                    right_motor_channel)
 
         # Create RobotDrive using motor controllers
-        if self._left_motor_controller and self._right_motor_controller:
-            self._robot_drive = wpilib.RobotDrive(self._left_controller, self._right_controller)
+        if self._left_controller and self._right_controller:
+            self._robot_drive = wpilib.RobotDrive(self._left_controller,
+                    self._right_controller)
             self._robot_drive.SetExpiration(motor_safety_timeout)
             self._robot_drive.SetSafetyEnabled(True)
 
         # Invert motors if specified
         if left_motor_inverted and self._robot_drive:
-            self._robot_drive.SetInvertedMotor(wpilib.RobotDrive.kRearLeftMotor, True)
+            self._robot_drive.SetInvertedMotor(wpilib.RobotDrive.kRearLeftMotor,
+                    True)
         if right_motor_inverted and self._robot_drive:
-            self._robot_drive.SetInvertedMotor(wpilib.RobotDrive.kRearRightMotor, True)
+            self._robot_drive.SetInvertedMotor(
+                    wpilib.RobotDrive.kRearRightMotor, True)
 
         if self._log_enabled:
             if self.accelerometer_enabled:
@@ -408,9 +423,10 @@ class DriveTrain(object):
     def read_sensors(self):
         """Read and store current sensor values.
 
-        Reads the gyro angle to get the robots heading and the accelerometer to get
-        the acceleration in the forward/backward direction of the robot.  Distance
-        traveled is calculated by multiplying the acceleration value by time squared.
+        Reads the gyro angle to get the robots heading and the accelerometer to
+        get the acceleration in the forward/backward direction of the robot.
+        Distance traveled is calculated by multiplying the acceleration value
+        by time squared.
 
         """
         loop_time = 0.0
@@ -419,11 +435,13 @@ class DriveTrain(object):
             self._gyro_angle = self._gyro.GetAngle()
 
         if self.accelerometer_enabled:
-            self._acceleration = self._accelerometer.GetAcceleration(self._accelerometer_axis)
+            self._acceleration = self._accelerometer.GetAcceleration(
+                    self._accelerometer_axis)
             if self._acceleration_timer:
                 loop_time = self._acceleration_timer.elapsed_time_in_secs()
                 self._acceleration_timer.start()
-                self._distance_traveled += (self._acceleration * loop_time * loop_time)
+                self._distance_traveled += (self._acceleration * \
+                        loop_time * loop_time)
 
     def reset_sensors(self):
         """Reset sensors.
@@ -446,10 +464,12 @@ class DriveTrain(object):
         """Return a string containing sensor and status variables.
 
         Returns:
-            A string with the gyro angle, acceleration value, and distance traveled.
+            A string with the gyro angle, acceleration value, and distance
+                traveled.
         """
         return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % \
-                {'gyro':self._gyro_angle, 'acc':self._acceleration, 'dis':self._distance_traveled}
+                {'gyro':self._gyro_angle, 'acc':self._acceleration,
+                        'dis':self._distance_traveled}
 
     def log_current_state(self):
         """Log sensor and status variables."""
@@ -458,13 +478,14 @@ class DriveTrain(object):
                 self._log.WriteValue("Gyro angle", self._gyro_angle, True)
             if self.accelerometer_enabled:
                 self._log.WriteValue("Acceleration", self._acceleration, True)
-                self._log.WriteValue("Distance traveled", self._distance_traveled, True)
+                self._log.WriteValue("Distance traveled",
+                        self._distance_traveled, True)
 
     def adjust_heading(self, adjustment, speed):
         """Turns left/right to adjust robot heading.
 
-        Using the gyro to keep track of the current heading, turns the robot until it is
-        facing the previous heading plus/minus the adjustment.
+        Using the gyro to keep track of the current heading, turns the robot
+        until it is facing the previous heading plus/minus the adjustment.
 
         Args:
             adjustment: the heading adjustment in degrees.
@@ -478,13 +499,14 @@ class DriveTrain(object):
             self._adjustment_in_progress = False
             return True
 
-        # If this is the first time the iterative method is called, store the initial heading
+        # If this is the first time called, store initial heading
         if not self._adjustment_in_progress:
             self._initial_heading = self._gyro_angle
             self._adjustment_in_progress = True
 
         # Calculate the amount of adjustment remaining
-        angle_remaining = (self._initial_heading + adjustment) - self._gyro_angle
+        angle_remaining = (self._initial_heading + adjustment) - \
+                self._gyro_angle
 
         # Determine the turn direction
         turn_direction = 0
@@ -500,11 +522,15 @@ class DriveTrain(object):
             return True
         else:
             if math.fabs(angle_remaining) > self._auto_far_heading_threshold:
-                turn_direction = turn_direction * speed * self._auto_far_turning_speed_ratio
-            else if math.fabs(angle_remaining) > self._auto_medium_heading_threshold:
-                turn_direction = turn_direction * speed * self._auto_medium_turning_speed_ratio
+                turn_direction = turn_direction * speed * \
+                        self._auto_far_turning_speed_ratio
+            elif math.fabs(angle_remaining) > \
+                    self._auto_medium_heading_threshold:
+                turn_direction = turn_direction * speed * \
+                        self._auto_medium_turning_speed_ratio
             else:
-                turn_direction = turn_direction * speed * self._auto_near_turning_speed_ratio
+                turn_direction = turn_direction * speed * \
+                        self._auto_near_turning_speed_ratio
             self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
 
         return False
@@ -512,11 +538,13 @@ class DriveTrain(object):
     def drive_distance(self, distance, speed):
         """Drives forward/backward a specified distance.
 
-        Using the accelerometer to calculate distance traveled, drives the robot forward or
-        backward until the distance traveled is within tolerance of the desired distance.
+        Using the accelerometer to calculate distance traveled, drives the
+        robot forward or backward until the distance traveled is within
+        tolerance of the desired distance.
 
         Args:
-            distance: the distance in meters with a negative value meaning backwards.
+            distance: the distance in meters with a negative value meaning
+                backwards.
             speed: the motor speed ratio used while driving.
 
         Returns:
@@ -543,11 +571,14 @@ class DriveTrain(object):
             return True
         else:
             if distance_left > self._auto_far_distance_threshold:
-                directional_multiplier = directional_multiplier * speed * self._auto_far_linear_speed_ratio
-            else if distance_left > self._auto_medium_distance_threshold:
-                directional_multiplier = directional_multiplier * speed * self._auto_medium_linear_speed_ratio
+                directional_multiplier = directional_multiplier * speed * \
+                        self._auto_far_linear_speed_ratio
+            elif distance_left > self._auto_medium_distance_threshold:
+                directional_multiplier = directional_multiplier * speed * \
+                        self._auto_medium_linear_speed_ratio
             else:
-                directional_multiplier = directional_multiplier * speed * self._auto_near_linear_speed_ratio
+                directional_multiplier = directional_multiplier * speed * \
+                        self._auto_near_linear_speed_ratio
             self._robot_drive.ArcadeDrive(directional_multiplier, 0.0, False)
 
         return False
@@ -555,7 +586,8 @@ class DriveTrain(object):
     def drive_time(self, time, direction, speed):
         """Drives forward/backward for a time duration.
 
-        Using a timer, drives the robot forward or backward for a certain time duration.
+        Using a timer, drives the robot forward or backward for a certain time
+        duration.
 
         Args:
             time: the amount of time to drive.
@@ -588,11 +620,14 @@ class DriveTrain(object):
                 directional_speed = self._backward_direction
 
             if time_left > self._auto_far_time_threshold:
-                directional_speed = directional_speed * speed * self._auto_far_linear_speed_ratio
-            else if time_left > self._auto_medium_time_threshold:
-                directional_speed = directional_speed * speed * self._auto_medium_linear_speed_ratio
+                directional_speed = directional_speed * speed * \
+                        self._auto_far_linear_speed_ratio
+            elif time_left > self._auto_medium_time_threshold:
+                directional_speed = directional_speed * speed * \
+                        self._auto_medium_linear_speed_ratio
             else:
-                directional_speed = directional_speed * speed * self._auto_near_linear_speed_ratio
+                directional_speed = directional_speed * speed * \
+                        self._auto_near_linear_speed_ratio
             self._robot_drive.ArcadeDrive(directional_speed, 0.0, False)
 
         return False
@@ -600,11 +635,13 @@ class DriveTrain(object):
     def drive(self, directional_speed, directional_turn, alternate):
         """Drives the robot using a specified linear and turning speed.
 
-        This method is used in manual/teleop driving mode, where the forward/backward and
-        left/right values are obtained from the driver controls.
+        This method is used in manual/teleop driving mode, where the
+        forward/backward and left/right values are obtained from the driver
+        controls.
 
         Args:
-            directional_speed: the speed and direction for linear driving forward/backward.
+            directional_speed: the speed and direction for linear driving
+                forward/backward.
             directional_turn: the speed and direction for turning left/right.
             alternate: True if the robot should move at 'alternate' speed.
         """
@@ -623,25 +660,33 @@ class DriveTrain(object):
             turn = self._normal_turning_speed_ratio * directional_turn
 
         # Smooth the robot acceleration/deceleration.
-        # This is used to prevent tipping or jerky movement, and may not be necessary
-        # depending on the robot design.
+        # This is used to prevent tipping or jerky movement and may not be
+        # necessary depending on the robot design.
         # Method 1: using a maximum amount of change per robot iterative cycle
-        if math.fabs(linear - self._previous_linear_speed) > self._maximum_linear_speed_change:
+        if math.fabs(linear - self._previous_linear_speed) > \
+                self._maximum_linear_speed_change:
             if (linear - self._previous_linear_speed) < 0:
-                linear = self._previous_linear_speed - self._maximum_linear_speed_change
+                linear = self._previous_linear_speed - \
+                        self._maximum_linear_speed_change
             else:
-                linear = self._previous_linear_speed + self._maximum_linear_speed_change
-        if math.fabs(turn - self._previous_turn_speed) > self._maximum_turn_speed_change:
+                linear = self._previous_linear_speed + \
+                        self._maximum_linear_speed_change
+        if math.fabs(turn - self._previous_turn_speed) > \
+                self._maximum_turn_speed_change:
             if (turn - self._previous_turn_speed) < 0:
-                turn = self._previous_turn_speed - self._maximum_turn_speed_change
-            else
-                turn = self._previous_turn_speed + self._maximum_turn_speed_change
+                turn = self._previous_turn_speed - \
+                        self._maximum_turn_speed_change
+            else:
+                turn = self._previous_turn_speed + \
+                        self._maximum_turn_speed_change
 
         # Method 2: using a simple low pass filter
         # new speed = target speed - K * (target speed - current speed)
         # Where K should be around 0.8? (higher: slower rate of change)
-        #linear = linear - self._linear_filter_constant * (linear - self._previous_linear_speed)
-        #turn = turn - self._turn_filter_constant * (turn - self._previous_turn_speed)
+        #linear = linear - self._linear_filter_constant * \
+        #       (linear - self._previous_linear_speed)
+        #turn = turn - self._turn_filter_constant * \
+        #       (turn - self._previous_turn_speed)
 
         self._robot_drive.ArcadeDrive(linear, turn, False)
         self._previous_linear_speed = linear
@@ -650,13 +695,15 @@ class DriveTrain(object):
     def tank_drive(self, left_stick, right_stick, alternate):
         """Drives the robot using left and right 'tank track' controls.
 
-        This is an alternate method used during manual/teleop driving mode, where each
-        side of the robot is controlled by a separate forward/backward control, like
-        tank tracks.
+        This is an alternate method used during manual/teleop driving mode,
+        where each side of the robot is controlled by a separate
+        forward/backward control, like tank tracks.
 
         Args:
-            left_stick: the 'y' position of the left thumbstick to control the left track.
-            right_stick: the 'y' position of the right thumbstick to control the right track.
+            left_stick: the 'y' position of the left thumbstick to control the
+                left track.
+            right_stick: the 'y' position of the right thumbstick to control the
+                right track.
             alternate: True if the robot should move at 'alternate' speed.
         """
         # Abort if the robot drive is not available
@@ -678,8 +725,8 @@ class DriveTrain(object):
     def turn_heading(self, heading, speed):
         """Turns the robot left/right to face a specified heading.
 
-        Using the gyro to keep track of the current heading, turns the robot until it is
-        facing the specified heading.
+        Using the gyro to keep track of the current heading, turns the robot
+        until it is facing the specified heading.
 
         Args:
             heading: the desired heading in degrees.
@@ -708,11 +755,15 @@ class DriveTrain(object):
             return True
         else:
             if math.fabs(angle_remaining) > self._auto_far_heading_threshold:
-                turn_direction = turn_direction * speed * self._auto_far_turning_ratio
-            else if math.fabs(angle_remaining) > self._auto_medium_heading_threshold:
-                turn_direction = turn_direction * speed * self._auto_medium_turning_ratio
+                turn_direction = turn_direction * speed * \
+                        self._auto_far_turning_speed_ratio
+            elif math.fabs(angle_remaining) > \
+                    self._auto_medium_heading_threshold:
+                turn_direction = turn_direction * speed * \
+                        self._auto_medium_turning_speed_ratio
             else:
-                turn_direction = turn_direction * speed * self._auto_near_turning_ratio
+                turn_direction = turn_direction * speed * \
+                        self._auto_near_turning_speed_ratio
             self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
 
         return False
@@ -720,7 +771,8 @@ class DriveTrain(object):
     def turn_time(self, time, direction, speed):
         """Turns the robot left/right for a time duration.
 
-        Using a timer, turns the robot left or right for a certain time duration.
+        Using a timer, turns the robot left or right for a certain time
+        duration.
 
         Args:
             time: the amount of time to drive.
@@ -754,11 +806,14 @@ class DriveTrain(object):
                 directional_speed = self._right_direction
 
             if time_left > self._auto_far_time_threshold:
-                directional_speed = directional_speed * speed * self._auto_far_turning_speed_ratio
-            else if time_left > self._auto_medium_time_threshold:
-                directional_speed = directional_speed * speed * self._auto_medium_turning_speed_ratio
+                directional_speed = directional_speed * speed * \
+                        self._auto_far_turning_speed_ratio
+            elif time_left > self._auto_medium_time_threshold:
+                directional_speed = directional_speed * speed * \
+                        self._auto_medium_turning_speed_ratio
             else:
-                directional_speed = directional_speed * speed * self._auto_near_turning_speed_ratio
+                directional_speed = directional_speed * speed * \
+                        self._auto_near_turning_speed_ratio
             self._robot_drive.ArcadeDrive(0.0, directional_speed, False)
 
         return False

@@ -1,3 +1,5 @@
+"""This module provides a class to read autoscript files."""
+
 # Imports
 
 class AutoScriptCommand(object):
@@ -11,10 +13,6 @@ class AutoScriptCommand(object):
     # Public member variables
     command = None
     parameters = None
-
-    def __init__(self):
-        """Create and initialize an empty AutoScriptCommand."""
-        #TODO
 
     def __init__(self, c, p):
         """Create and initialize an AutoScriptCommand.
@@ -43,14 +41,6 @@ class AutoScript(object):
 
     # Private member variables
     #TODO
-
-    def __init__(self):
-        """Create and initialize an AutoScript object.
-
-        Instantiate a AutoScript object using default values.
-
-        """
-        #TODO
 
     def __init__(self, path_and_file):
         """Create and initialize an AutoScript object with a specified file.
@@ -92,8 +82,8 @@ class AutoScript(object):
     def read_script(self):
         """Read all autoscript commands from the file.
 
-        Reads the entire autoscript file formatted as a comma separated value (CSV)
-        file.  The commands are stored as objects in a List.
+        Reads the entire autoscript file formatted as a comma separated value
+        (CSV) file.  The commands are stored as objects in a List.
 
         Returns:
             True if successful.

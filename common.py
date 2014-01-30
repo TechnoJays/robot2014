@@ -1,4 +1,6 @@
-class Direction:
+"""This module provides common enumerations for FRC robots."""
+
+class Direction(object):
     """Enumerates movement directions
 
     This enumeration is used to describe the direction of an class that
@@ -22,7 +24,7 @@ class Direction:
     UP = 5
     DOWN = 6
 
-class ProgramState:
+class ProgramState(object):
     """Enumerates robot game states.
 
     This enumeration is used to keep track of the current game state as

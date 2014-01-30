@@ -1,3 +1,5 @@
+"""This module contains the FRC robot class."""
+
 # Imports
 import wpilib
 
@@ -6,12 +8,6 @@ import datalog
 import drivetrain
 import parameters
 import userinterface
-
-def CheckRestart():
-    """Monitor user input for a restart request."""
-    #if lstick.GetRawButton(10):
-    #    raise RuntimeError("Restart")
-    #TODO
 
 class MyRobot(wpilib.SimpleRobot):
     """Controls the robot.
@@ -31,10 +27,10 @@ class MyRobot(wpilib.SimpleRobot):
     _user_interface = None
 
     # Private member variables
-    _log_enabled = False:
+    _log_enabled = False
     _parameters_file = None
 
-    def _initialize(self, parameters, logging_enabled):
+    def _initialize(self, params, logging_enabled):
         """Initialize the robot.
 
         Initialize instance variables to defaults, read parameter values from
@@ -42,7 +38,7 @@ class MyRobot(wpilib.SimpleRobot):
         variables.
 
         Args:
-            parameters: The parameters filename to use for configuration.
+            params: The parameters filename to use for configuration.
             logging_enabled: True if logging should be enabled.
 
         """
@@ -70,12 +66,14 @@ class MyRobot(wpilib.SimpleRobot):
                 self._log = None
 
         # Read parameters file
-        self._parameters_file = parameters
+        self._parameters_file = params
         self.load_parameters()
 
         # Create robot objects
-        self._drive_train = drivetrain.DriveTrain("drivetrain.par", self._log_enabled)
-        self._user_interface = userinterface.UserInterface("userinterface.par", self._log_enabled)
+        self._drive_train = drivetrain.DriveTrain("drivetrain.par",
+                self._log_enabled)
+        self._user_interface = userinterface.UserInterface("userinterface.par",
+                self._log_enabled)
 
     def load_parameters(self):
         """Load values from a parameter file and create and initialize objects.
@@ -145,7 +143,7 @@ class MyRobot(wpilib.SimpleRobot):
             # Set all motors to be stopped (prevent motor safety errors)
             if self._drive_train:
                 self._drive_train.Drive(0.0, 0.0, False)
-            CheckRestart()  #TODO - only include while testing
+            self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
 
     def Autonomous(self):
@@ -163,7 +161,7 @@ class MyRobot(wpilib.SimpleRobot):
         # Repeat this loop as long as we're in Autonomous
         self.GetWatchdog().SetEnabled(False)
         while self.IsAutonomous() and self.IsEnabled():
-            CheckRestart()  #TODO - only include while testing
+            self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
 
     def OperatorControl(self):
@@ -196,25 +194,44 @@ class MyRobot(wpilib.SimpleRobot):
             # Perform user controlled actions
             if self._user_interface:
                 # Get the values for the thumbsticks and dpads
-                driver_left_y = self._user_interface.get_axis_value(userinterface.UserControllers.DRIVER, userinterface.JoystickAxis.LEFTY);
-                driver_right_y = self._user_interface.get_axis_value(userinterface.UserControllers.DRIVER, userinterface.JoystickAxis.RIGHTY);
-                scoring_left_y = self._user_interface.get_axis_value(userinterface.UserControllers.SCORING, userinterface.JoystickAxis.LEFTY);
-                scoring_right_y = self._user_interface.get_axis_value(userinterface.UserControllers.SCORING, userinterface.JoystickAxis.RIGHTY);
-                scoring_dpad_y = self._user_interface.get_axis_value(userinterface.UserControllers.SCORING, userinterface.JoystickAxis.DPADY);
+                driver_left_y = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickAxis.LEFTY)
+                driver_right_y = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickAxis.RIGHTY)
+                scoring_left_y = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickAxis.LEFTY)
+                scoring_right_y = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickAxis.RIGHTY)
+                scoring_dpad_y = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickAxis.DPADY)
 
                 # Manually control the robot
                 if driver_left_y != 0.0 or driver_right_y != 0.0:
                     if self._drive_train:
-                        self._drive_train.tank_drive(driver_left_y, driver_right_y, False)
+                        self._drive_train.tank_drive(driver_left_y,
+                                driver_right_y, False)
                 else:
                     self._drive_train.tank_drive(0.0, 0.0, False)
 
                 # Update/store the UI button state
-                self._user_interface.store_button_states(userinterface.UserControllers.DRIVER)
-                self._user_interface.store_button_states(userinterface.UserControllers.SCORING)
+                self._user_interface.store_button_states(
+                        userinterface.UserControllers.DRIVER)
+                self._user_interface.store_button_states(
+                        userinterface.UserControllers.SCORING)
 
-            CheckRestart()  #TODO - only include while testing
+            self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
+
+    def _check_restart(self):
+        """Monitor user input for a restart request."""
+        #if lstick.GetRawButton(10):
+        #    raise RuntimeError("Restart")
+        #TODO
 
 def run():
     """Create the robot and start it."""
