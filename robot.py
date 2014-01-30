@@ -9,6 +9,7 @@ import drivetrain
 import parameters
 import userinterface
 
+
 class MyRobot(wpilib.SimpleRobot):
     """Controls the robot.
 
@@ -232,6 +233,7 @@ class MyRobot(wpilib.SimpleRobot):
         #if lstick.GetRawButton(10):
         #    raise RuntimeError("Restart")
         #TODO
+
 
 def run():
     """Create the robot and start it."""

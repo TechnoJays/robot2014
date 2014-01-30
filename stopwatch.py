@@ -3,6 +3,7 @@
 # Imports
 import time
 
+
 class Stopwatch(object):
     """Provides stopwatch timing functionality.
 

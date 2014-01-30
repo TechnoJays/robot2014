@@ -325,7 +325,6 @@ class DriveTrain(object):
             self._turn_filter_constant = self._parameters.get_value(
                     "TURN_FILTER_CONSTANT")
 
-
         # Check if the accelerometer is present/enabled
         self.accelerometer_enabled = False
         if accelerometer_slot > 0 and accelerometer_range >= 0:
@@ -440,7 +439,7 @@ class DriveTrain(object):
             if self._acceleration_timer:
                 loop_time = self._acceleration_timer.elapsed_time_in_secs()
                 self._acceleration_timer.start()
-                self._distance_traveled += (self._acceleration * \
+                self._distance_traveled += (self._acceleration *
                         loop_time * loop_time)
 
     def reset_sensors(self):
@@ -467,8 +466,8 @@ class DriveTrain(object):
             A string with the gyro angle, acceleration value, and distance
                 traveled.
         """
-        return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % \
-                {'gyro':self._gyro_angle, 'acc':self._acceleration,
+        return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % {'gyro':self._gyro_angle,
+                'acc':self._acceleration,
                         'dis':self._distance_traveled}
 
     def log_current_state(self):
@@ -505,8 +504,8 @@ class DriveTrain(object):
             self._adjustment_in_progress = True
 
         # Calculate the amount of adjustment remaining
-        angle_remaining = (self._initial_heading + adjustment) - \
-                self._gyro_angle
+        angle_remaining = ((self._initial_heading + adjustment) -
+                self._gyro_angle)
 
         # Determine the turn direction
         turn_direction = 0
@@ -522,15 +521,15 @@ class DriveTrain(object):
             return True
         else:
             if math.fabs(angle_remaining) > self._auto_far_heading_threshold:
-                turn_direction = turn_direction * speed * \
-                        self._auto_far_turning_speed_ratio
-            elif math.fabs(angle_remaining) > \
-                    self._auto_medium_heading_threshold:
-                turn_direction = turn_direction * speed * \
-                        self._auto_medium_turning_speed_ratio
+                turn_direction = (turn_direction * speed *
+                        self._auto_far_turning_speed_ratio)
+            elif (math.fabs(angle_remaining) >
+                    self._auto_medium_heading_threshold):
+                turn_direction = (turn_direction * speed *
+                        self._auto_medium_turning_speed_ratio)
             else:
-                turn_direction = turn_direction * speed * \
-                        self._auto_near_turning_speed_ratio
+                turn_direction = (turn_direction * speed *
+                        self._auto_near_turning_speed_ratio)
             self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
 
         return False
@@ -571,14 +570,14 @@ class DriveTrain(object):
             return True
         else:
             if distance_left > self._auto_far_distance_threshold:
-                directional_multiplier = directional_multiplier * speed * \
-                        self._auto_far_linear_speed_ratio
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_far_linear_speed_ratio)
             elif distance_left > self._auto_medium_distance_threshold:
-                directional_multiplier = directional_multiplier * speed * \
-                        self._auto_medium_linear_speed_ratio
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_medium_linear_speed_ratio)
             else:
-                directional_multiplier = directional_multiplier * speed * \
-                        self._auto_near_linear_speed_ratio
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_near_linear_speed_ratio)
             self._robot_drive.ArcadeDrive(directional_multiplier, 0.0, False)
 
         return False
@@ -620,14 +619,14 @@ class DriveTrain(object):
                 directional_speed = self._backward_direction
 
             if time_left > self._auto_far_time_threshold:
-                directional_speed = directional_speed * speed * \
-                        self._auto_far_linear_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_far_linear_speed_ratio)
             elif time_left > self._auto_medium_time_threshold:
-                directional_speed = directional_speed * speed * \
-                        self._auto_medium_linear_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_medium_linear_speed_ratio)
             else:
-                directional_speed = directional_speed * speed * \
-                        self._auto_near_linear_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_near_linear_speed_ratio)
             self._robot_drive.ArcadeDrive(directional_speed, 0.0, False)
 
         return False
@@ -663,30 +662,30 @@ class DriveTrain(object):
         # This is used to prevent tipping or jerky movement and may not be
         # necessary depending on the robot design.
         # Method 1: using a maximum amount of change per robot iterative cycle
-        if math.fabs(linear - self._previous_linear_speed) > \
-                self._maximum_linear_speed_change:
+        if (math.fabs(linear - self._previous_linear_speed) >
+                self._maximum_linear_speed_change):
             if (linear - self._previous_linear_speed) < 0:
-                linear = self._previous_linear_speed - \
-                        self._maximum_linear_speed_change
+                linear = (self._previous_linear_speed -
+                        self._maximum_linear_speed_change)
             else:
-                linear = self._previous_linear_speed + \
-                        self._maximum_linear_speed_change
-        if math.fabs(turn - self._previous_turn_speed) > \
-                self._maximum_turn_speed_change:
+                linear = (self._previous_linear_speed +
+                        self._maximum_linear_speed_change)
+        if (math.fabs(turn - self._previous_turn_speed) >
+                self._maximum_turn_speed_change):
             if (turn - self._previous_turn_speed) < 0:
-                turn = self._previous_turn_speed - \
-                        self._maximum_turn_speed_change
+                turn = (self._previous_turn_speed -
+                        self._maximum_turn_speed_change)
             else:
-                turn = self._previous_turn_speed + \
-                        self._maximum_turn_speed_change
+                turn = (self._previous_turn_speed +
+                        self._maximum_turn_speed_change)
 
         # Method 2: using a simple low pass filter
         # new speed = target speed - K * (target speed - current speed)
         # Where K should be around 0.8? (higher: slower rate of change)
-        #linear = linear - self._linear_filter_constant * \
-        #       (linear - self._previous_linear_speed)
-        #turn = turn - self._turn_filter_constant * \
-        #       (turn - self._previous_turn_speed)
+        #linear = (linear - self._linear_filter_constant *
+        #       (linear - self._previous_linear_speed))
+        #turn = (turn - self._turn_filter_constant *
+        #       (turn - self._previous_turn_speed))
 
         self._robot_drive.ArcadeDrive(linear, turn, False)
         self._previous_linear_speed = linear
@@ -755,15 +754,15 @@ class DriveTrain(object):
             return True
         else:
             if math.fabs(angle_remaining) > self._auto_far_heading_threshold:
-                turn_direction = turn_direction * speed * \
-                        self._auto_far_turning_speed_ratio
-            elif math.fabs(angle_remaining) > \
-                    self._auto_medium_heading_threshold:
-                turn_direction = turn_direction * speed * \
-                        self._auto_medium_turning_speed_ratio
+                turn_direction = (turn_direction * speed *
+                        self._auto_far_turning_speed_ratio)
+            elif (math.fabs(angle_remaining) >
+                    self._auto_medium_heading_threshold):
+                turn_direction = (turn_direction * speed *
+                        self._auto_medium_turning_speed_ratio)
             else:
-                turn_direction = turn_direction * speed * \
-                        self._auto_near_turning_speed_ratio
+                turn_direction = (turn_direction * speed *
+                        self._auto_near_turning_speed_ratio)
             self._robot_drive.ArcadeDrive(0.0, turn_direction, False)
 
         return False
@@ -806,14 +805,14 @@ class DriveTrain(object):
                 directional_speed = self._right_direction
 
             if time_left > self._auto_far_time_threshold:
-                directional_speed = directional_speed * speed * \
-                        self._auto_far_turning_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_far_turning_speed_ratio)
             elif time_left > self._auto_medium_time_threshold:
-                directional_speed = directional_speed * speed * \
-                        self._auto_medium_turning_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_medium_turning_speed_ratio)
             else:
-                directional_speed = directional_speed * speed * \
-                        self._auto_near_turning_speed_ratio
+                directional_speed = (directional_speed * speed *
+                        self._auto_near_turning_speed_ratio)
             self._robot_drive.ArcadeDrive(0.0, directional_speed, False)
 
         return False

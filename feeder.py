@@ -6,6 +6,7 @@ import common
 import datalog
 import parameters
 
+
 class Feeder(object):
     """A mechanism that feeds frisbees to a shooter.
 

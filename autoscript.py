@@ -2,6 +2,7 @@
 
 # Imports
 
+
 class AutoScriptCommand(object):
     """Object that stores the information for an autoscript command.
 
@@ -22,6 +23,7 @@ class AutoScriptCommand(object):
             p: the List of parameters for the command.
 
         """
+
 
 class AutoScript(object):
     """Reads autonomous robot sequences from a file into memory.

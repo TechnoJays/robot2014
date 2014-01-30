@@ -6,6 +6,7 @@ import common
 import datalog
 import parameters
 
+
 class Class(object):
     """One line summary.
 

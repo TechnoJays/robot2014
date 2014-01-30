@@ -24,6 +24,7 @@ class Direction(object):
     UP = 5
     DOWN = 6
 
+
 class ProgramState(object):
     """Enumerates robot game states.
 
