@@ -1,6 +1,8 @@
 """This module provides a class to read autoscript files."""
 
 # Imports
+import csv
+import glob
 
 
 class AutoScriptCommand(object):
@@ -23,75 +25,69 @@ class AutoScriptCommand(object):
             p: the List of parameters for the command.
 
         """
+        self.command = c
+        self.parameters = p
 
 
 class AutoScript(object):
-    """Reads autonomous robot sequences from a file into memory.
+    """Reads autonomous robot sequences from a file into memory."""
 
-    Provides a simple interface to read specific name/value pairs
-    from a file.
-
-    Attributes:
-        file_opened: True if an autoscript file is currently open.
-
-    """
     # Public member variables
-    file_opened = False
 
     # Private member objects
-    #TODO
 
     # Private member variables
-    #TODO
+    _commands = None
+    _command_iterator = None
 
-    def __init__(self, path_and_file):
+    def __init__(self, path_and_file=None):
         """Create and initialize an AutoScript object with a specified file.
 
-        Instantiate a AutoScript object and open a specified script file.
+        Instantiate an AutoScript object and parse a specified script file.
 
         Args:
             path_and_file: the path and filename of the autoscript file.
 
         """
-        #TODO
+        if path_and_file:
+            self.parse(path_and_file)
 
     def dispose(self):
-        """Dispose of an AutoScript object.
+        """Dispose of an AutoScript object."""
+        self._commands = None
 
-        Dispose of an AutoScript object when it is no longer required by closing
-        the open file if it exists, and removing references to any internal
-        objects.
-
-        """
-        #TODO
-
-    def open(self, path_and_file):
-        """Open a script file for reading.
-
-        Args:
-            path_and_file: the path and filename of the autoscript file.
-
-        Returns:
-            True if successful.
-
-        """
-        #TODO
-
-    def close(self):
-        """Close the autoscript file."""
-        #TODO
-
-    def read_script(self):
+    def parse(self, path_and_file):
         """Read all autoscript commands from the file.
 
         Reads the entire autoscript file formatted as a comma separated value
         (CSV) file.  The commands are stored as objects in a List.
 
+        Args:
+            path_and_file: the path and filename of the autoscript file.
+
         Returns:
-            True if successful.
+            The list of AutoScriptCommand objects.
 
         """
-        #TODO
+        # Clear out any old data
+        self._commands = []
+
+        with open(path_and_file, 'rb') as asfile:
+            csvreader = csv.reader(asfile, delimiter=',')
+            for row in csvreader:
+                cmd = None
+                params = []
+                for column in row:
+                    if not cmd:
+                        cmd = column
+                    else:
+                        params.append(column)
+                if cmd:
+                    command = AutoScriptCommand(cmd, params)
+                    self._commands.append(command)
+
+        self._command_iterator = iter(self._commands)
+        return self._commands
 
     def get_available_scripts(self):
         """Get a list of autoscript files in the current directory.
@@ -100,7 +96,7 @@ class AutoScript(object):
             A List of AutoScript filenames.
 
         """
-        #TODO
+        return glob.glob('*.as')
 
     def get_next_command(self):
         """Get the next AutoScript command.
@@ -109,17 +105,10 @@ class AutoScript(object):
             The next AutoScriptCommand from the file.
 
         """
-        #TODO
-
-    def get_command(self, command_index):
-        """Get the specified AutoScript command.
-
-        Args:
-            command_index: the index of the command.
-
-        Returns:
-            The specified AutoScriptCommand.
-
-        """
-        #TODO
-
+        cmd = None
+        if self._command_iterator:
+            try:
+                cmd = self._command_iterator.next()
+            except StopIteration:
+                cmd = None
+        return cmd
