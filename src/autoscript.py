@@ -1,6 +1,7 @@
 """This module provides a class to read autoscript files."""
 
 # Imports
+import os
 import csv
 import glob
 
@@ -72,31 +73,38 @@ class AutoScript(object):
         # Clear out any old data
         self._commands = []
 
-        with open(path_and_file, 'rb') as asfile:
-            csvreader = csv.reader(asfile, delimiter=',')
-            for row in csvreader:
-                cmd = None
-                params = []
-                for column in row:
-                    if not cmd:
-                        cmd = column
-                    else:
-                        params.append(column)
-                if cmd:
-                    command = AutoScriptCommand(cmd, params)
-                    self._commands.append(command)
+        try:
+            with open(path_and_file, 'rb') as asfile:
+                csvreader = csv.reader(asfile, delimiter=',')
+                for row in csvreader:
+                    cmd = None
+                    params = []
+                    for column in row:
+                        if not cmd:
+                            cmd = column
+                        else:
+                            params.append(column)
+                    if cmd:
+                        command = AutoScriptCommand(cmd, params)
+                        self._commands.append(command)
+        except (OSError, IOError) as excep:
+            self._commands = None
+            return self._commands
 
         self._command_iterator = iter(self._commands)
         return self._commands
 
-    def get_available_scripts(self):
+    def get_available_scripts(self, path=None):
         """Get a list of autoscript files in the current directory.
 
         Returns:
             A List of AutoScript filenames.
 
         """
-        return glob.glob('*.as')
+        if path:
+            return glob.glob(os.path.realpath(path + '/*.as'))
+        else:
+            return glob.glob('*.as')
 
     def get_next_command(self):
         """Get the next AutoScript command.
@@ -112,3 +120,4 @@ class AutoScript(object):
             except StopIteration:
                 cmd = None
         return cmd
+
