@@ -61,8 +61,6 @@ class Stopwatch(object):
         if self._running:
             self._end = time.time()
             self._running = False
-            self._secs = self._end - self._start
-            self._msecs = self._secs * 1000
 
     def elapsed_time_in_secs(self):
         """Return elapsed time in seconds.
@@ -87,10 +85,9 @@ class Stopwatch(object):
         return None.
 
         """
-        if self._running:
-            self._end = time.time()
-        if self._start and self._end:
-            self._secs = self._end - self._start
-            self._msecs = self._secs * 1000
+
+        secs = self.elapsed_time_in_secs()
+        if secs:
+            self._msecs = secs * 1000
         return self._msecs
 
