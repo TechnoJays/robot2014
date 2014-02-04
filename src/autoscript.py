@@ -1,9 +1,22 @@
-"""This module provides a class to read autoscript files."""
+"""This module provides a class to read autoscript files.
+
+Packages required:
+    - os
+    - sys
+    - csv
+    - glob
+    - text_utilities
+
+"""
 
 # Imports
 import os
 import csv
 import glob
+
+import sys,os
+sys.path.append(os.path.realpath('ext/text_utilities/src'))
+from text_utilities.text_utilities import *
 
 
 class AutoScriptCommand(object):
@@ -83,7 +96,11 @@ class AutoScript(object):
                         if not cmd:
                             cmd = column
                         else:
-                            params.append(column)
+                            num = convert_to_number(column)
+                            if num:
+                                params.append(num)
+                            else:
+                                params.append(column)
                     if cmd:
                         command = AutoScriptCommand(cmd, params)
                         self._commands.append(command)

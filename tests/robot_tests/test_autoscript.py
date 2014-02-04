@@ -42,7 +42,7 @@ class TestAutoScript:
     def test_init_with_valid_file(self):
         a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
         assert a._commands != None
-        assert len(a._commands) > 0
+        assert len(a._commands) == 3
         assert a._command_iterator != None
 
     def test_dispose(self):
@@ -51,10 +51,17 @@ class TestAutoScript:
         assert a._commands == None
 
     def test_parse_valid_file(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
-        assert a._commands != None
-        assert len(a._commands) > 0
+        a = autoscript.AutoScript()
+        commands = a.parse(os.path.realpath('tests/files/test1.as'))
+        assert commands != None
+        assert len(commands) == 3
         assert a._command_iterator != None
+        assert commands[0].command == 'cmd1'
+        assert commands[0].parameters == ['p1',2,4.0]
+        assert commands[1].command == 'cmd2'
+        assert commands[1].parameters == [5,1.0,'xyz']
+        assert commands[2].command == 'cmd3'
+        assert commands[2].parameters == [1.0,'abc',2]
 
     def test_parse_file_not_found(self):
         a = autoscript.AutoScript(os.path.realpath('tests/files/test_asdfd.as'))
@@ -66,6 +73,10 @@ class TestAutoScript:
         assert a._commands != None
         assert len(a._commands) == 2
         assert a._command_iterator != None
+        assert a._commands[0].command == 'cmd1'
+        assert a._commands[0].parameters == ['abc',5.0,1]
+        assert a._commands[1].command == 'cmd2'
+        assert a._commands[1].parameters == ['',6,'','abc','']
 
     def test_get_available_scripts_no_path(self):
         a = autoscript.AutoScript()
@@ -88,19 +99,25 @@ class TestAutoScript:
         a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
         c = a.get_next_command()
         assert a._commands != None
-        assert len(a._commands) > 0
+        assert len(a._commands) == 3
         assert a._command_iterator != None
         assert c != None
+        assert c.command == 'cmd1'
+        assert c.parameters == ['p1',2,4.0]
 
     def test_get_next_command_second_command(self):
         a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
         c1 = a.get_next_command()
         c2 = a.get_next_command()
         assert a._commands != None
-        assert len(a._commands) > 0
+        assert len(a._commands) == 3
         assert a._command_iterator != None
         assert c1 != None
         assert c2 != None
+        assert c1.command == 'cmd1'
+        assert c1.parameters == ['p1',2,4.0]
+        assert c2.command == 'cmd2'
+        assert c2.parameters == [5,1.0,'xyz']
 
     def test_get_next_command_none_left(self):
         a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
@@ -109,7 +126,7 @@ class TestAutoScript:
         c3 = a.get_next_command()
         c4 = a.get_next_command()
         assert a._commands != None
-        assert len(a._commands) > 0
+        assert len(a._commands) == 3
         assert a._command_iterator != None
         assert c1 != None
         assert c2 != None
