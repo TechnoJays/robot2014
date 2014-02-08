@@ -1,7 +1,12 @@
 """This module contains the FRC robot class."""
 
 # Imports
-import wpilib
+
+# If wpilib not available use pyfrc
+try
+    import wpilib
+except ImportError:
+    import pyfrc as wpilib
 
 import common
 import datalog
