@@ -3,7 +3,11 @@
 # Imports
 import math
 
-import wpilib
+# If wpilib not available use pyfrc
+try
+    import wpilib
+except ImportError:
+    from pyfrc import wpilib
 
 import common
 import datalog
