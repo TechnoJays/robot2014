@@ -1,0 +1,46 @@
+[targeting]
+# actual angle=47
+CAMERA_VIEW_ANGLE=43.5 
+CAMERA_PRESENT=1
+# 0=kResolution_640x480, 1=kResolution_640x360, 2=kResolution_320x240, kResolution_160x120
+CAMERA_RESOLUTION=2 
+FRAMES_PER_SECOND=10
+COLOR_LEVEL=50
+# 0=kWhiteBalance_Automatic, kWhiteBalance_Hold, kWhiteBalance_FixedOutdoor1, kWhiteBalance_FixedOutdoor2, kWhiteBalance_FixedIndoor, 5=kWhiteBalance_FixedFlourescent1, kWhiteBalance_FixedFlourescent2
+WHITE_BALANCE=5 
+BRIGHTNESS=50
+COMPRESSION=50
+# 0=kExposure_Automatic, 1=kExposure_Hold, kExposure_FlickerFree50Hz, kExposure_FlickerFree60Hz
+EXPOSURE=1 
+# manual correction to add to horizontal angle of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_HORIZONTAL_OFFSET=0   
+# manual correction to add to vertical angle of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_VERTICAL_OFFSET=0     
+# manual correction to add to distance of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_DISTANCE_OFFSET=0     
+# 0=HSV, 1=HSL, 2=RGB
+THRESHOLD_TYPE=0 
+THRESHOLD_PLANE_1_LOW=120
+THRESHOLD_PLANE_1_HIGH=170
+THRESHOLD_PLANE_2_LOW=50
+THRESHOLD_PLANE_2_HIGH=120
+THRESHOLD_PLANE_3_LOW=35
+THRESHOLD_PLANE_3_HIGH=90
+# minimum filled percent of rectangles to allow through filters
+PARTICLE_FILTER_FILLED_MINIMUM=35 
+# maximum filled percent of rectangles to allow through filters
+PARTICLE_FILTER_FILLED_MAXIMUM=65 
+# minimum aspect ratio to allow through filters
+TARGET_RECTANGLE_RATIO_MINIMUM=1.0 
+# maximum aspect ratio to allow through filters
+TARGET_RECTANGLE_RATIO_MAXIMUM=3.2 
+# threshold to use when comparing measured aspect ratio to known values
+TARGET_RECTANGLE_RATIO_THRESHOLD=0.4 
+# aspect ratio of hight goal
+TARGET_RECTANGLE_RATIO_HIGH=3.1 
+# aspect ratio of medium goal
+TARGET_RECTANGLE_RATIO_MEDIUM=2.13793 
+# aspect ratio of low goal
+TARGET_RECTANGLE_RATIO_LOW=1.15625 
+# minimum rectangularity value to pass filters, 78=circle, 100=perfect rectangle
+TARGET_RECTANGLE_SCORE_THRESHOLD=80.0 

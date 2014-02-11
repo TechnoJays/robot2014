@@ -1,0 +1,206 @@
+[drivetrain]
+# cRIO slot where the left motor controller is connected
+LEFT_MOTOR_SLOT=1					
+# cRIO channel where the left motor controller is connected
+LEFT_MOTOR_CHANNEL=5				
+# specifies if the left motor controller should invert the movement direction of the motor
+LEFT_MOTOR_INVERTED=1				
+# cRIO slot where the right motor controller is connected
+RIGHT_MOTOR_SLOT=1				
+# cRIO channel where the right motor controller is connected
+RIGHT_MOTOR_CHANNEL=3				
+# specifies if the right motor controller should invert the movement direction of the motor
+RIGHT_MOTOR_INVERTED=1.0
+# maximum time duration between motor speed commands before a safety error occurs
+MOTOR_SAFETY_TIMEOUT=3
+# cRIO slot where the accelerometer is connected
+ACCELEROMETER_SLOT=1             
+# ADXL345_I2C DataFormat range
+ACCELEROMETER_RANGE=0             
+# the ADXL345_I2C Axis of the accelerometer to measure
+ACCELEROMETER_AXIS=0              
+# cRIO channel where the gyro is connected
+GYRO_CHANNEL=1                   
+# gyro sensitivity
+GYRO_SENSITIVITY=0.007            
+# used to reverse motor speed/direction if the user-input controls are inverted
+INVERT_CONTROLS=0					
+# motor direction required to move the robot forward
+FORWARD_DIRECTION=-1.0			
+# motor direction required to move the robot backward
+BACKWARD_DIRECTION=1.0			
+# motor direction required to turn the robot left
+LEFT_DIRECTION=-1.0				
+# motor direction required to turn the robot right
+RIGHT_DIRECTION=1.0				
+# linear movement speed ratio (percentage) used during 'normal' mode
+NORMAL_LINEAR_SPEED_RATIO=1.0		
+# linear movement speed ratio (percentage) used during 'turbo' mode
+TURBO_LINEAR_SPEED_RATIO=0.4		
+# turning movement speed ratio (percentage) used during 'normal' mode
+NORMAL_TURNING_SPEED_RATIO=1.0	
+# turning movement speed ratio (percentage) used during 'turbo' mode
+TURBO_TURNING_SPEED_RATIO=0.4		
+# the linear driving speed when the robot is far from it's destination
+AUTO_FAR_LINEAR_SPEED_RATIO=0.8       
+# the linear driving speed when the robot is at a medium distance from it's destination
+AUTO_MEDIUM_LINEAR_SPEED_RATIO=0.6    
+# the linear driving speed when the robot is close to it's destination
+AUTO_NEAR_LINEAR_SPEED_RATIO=0.4      
+# the turning speed when the robot is far from it's heading
+AUTO_FAR_TURNING_SPEED_RATIO=1.0      
+# the turning speed when the robot is at a medium distance from it's heading
+AUTO_MEDIUM_TURNING_SPEED_RATIO=1.0   
+# the turning speed when the robot is close to it's heading
+AUTO_NEAR_TURNING_SPEED_RATIO=1.0     
+# the distance threshold at which we decide we're close enough to the desired location
+DISTANCE_THRESHOLD=0.5                
+# the heading threshold at which we decide we're close enough to the disired heading
+HEADING_THRESHOLD=1.0                 
+# the time threshold at which we decide we're close enough to the requested timed operation
+TIME_THRESHOLD=0.1                    
+# the time threshold at which we decide we're at a medium distance from the requested timed operation
+AUTO_MEDIUM_TIME_THRESHOLD=0.5        
+# the time threshold at which we decide we're far from the requested timed operation
+AUTO_FAR_TIME_THRESHOLD=1.0           
+# the distance threshold at which we decide we're at a medium distance from the requested distance operation
+AUTO_MEDIUM_DISTANCE_THRESHOLD=2.0    
+# the distance threshold at which we decide we're far from the requested distance operation
+AUTO_FAR_DISTANCE_THRESHOLD=5.0       
+# the heading threshold at which we decide we're at a medium distance from the requested heading operation
+AUTO_MEDIUM_HEADING_THRESHOLD=5.0     
+# the heading threshold at which we decide we're far from the requested heading operation
+AUTO_FAR_HEADING_THRESHOLD=10.0       
+# maximum amount of change allowed in motor speed used to smooth accelerations during linear movement
+MAXIMUM_LINEAR_SPEED_CHANGE=0.2	
+# maximum amount of change allowed in motor speed used to smooth accelerations during turning movement
+MAXIMUM_TURN_SPEED_CHANGE=0.2		
+# low pass filter constant used to smooth accelerations in linear movement
+LINEAR_FILTER_CONSTANT=0.8		
+# low pass filter constant used to smooth accelerations in turning movement
+TURN_FILTER_CONSTANT=0.8			
+
+[targeting]
+# actual angle=47
+CAMERA_VIEW_ANGLE=43.5 
+CAMERA_PRESENT=1
+# 0=kResolution_640x480, 1=kResolution_640x360, 2=kResolution_320x240, kResolution_160x120
+CAMERA_RESOLUTION=2 
+FRAMES_PER_SECOND=10
+COLOR_LEVEL=50
+# 0=kWhiteBalance_Automatic, kWhiteBalance_Hold, kWhiteBalance_FixedOutdoor1, kWhiteBalance_FixedOutdoor2, kWhiteBalance_FixedIndoor, 5=kWhiteBalance_FixedFlourescent1, kWhiteBalance_FixedFlourescent2
+WHITE_BALANCE=5 
+BRIGHTNESS=50
+COMPRESSION=50
+# 0=kExposure_Automatic, 1=kExposure_Hold, kExposure_FlickerFree50Hz, kExposure_FlickerFree60Hz
+EXPOSURE=1 
+# manual correction to add to horizontal angle of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_HORIZONTAL_OFFSET=0   
+# manual correction to add to vertical angle of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_VERTICAL_OFFSET=0     
+# manual correction to add to distance of target calculations to compenstate for robot to camera difference
+ANGLE_OF_TARGET_DISTANCE_OFFSET=0     
+# 0=HSV, 1=HSL, 2=RGB
+THRESHOLD_TYPE=0 
+THRESHOLD_PLANE_1_LOW=120
+THRESHOLD_PLANE_1_HIGH=170
+THRESHOLD_PLANE_2_LOW=50
+THRESHOLD_PLANE_2_HIGH=120
+THRESHOLD_PLANE_3_LOW=35
+THRESHOLD_PLANE_3_HIGH=90
+# minimum filled percent of rectangles to allow through filters
+PARTICLE_FILTER_FILLED_MINIMUM=35 
+# maximum filled percent of rectangles to allow through filters
+PARTICLE_FILTER_FILLED_MAXIMUM=65 
+# minimum aspect ratio to allow through filters
+TARGET_RECTANGLE_RATIO_MINIMUM=1.0 
+# maximum aspect ratio to allow through filters
+TARGET_RECTANGLE_RATIO_MAXIMUM=3.2 
+# threshold to use when comparing measured aspect ratio to known values
+TARGET_RECTANGLE_RATIO_THRESHOLD=0.4 
+# aspect ratio of hight goal
+TARGET_RECTANGLE_RATIO_HIGH=3.1 
+# aspect ratio of medium goal
+TARGET_RECTANGLE_RATIO_MEDIUM=2.13793 
+# aspect ratio of low goal
+TARGET_RECTANGLE_RATIO_LOW=1.15625 
+# minimum rectangularity value to pass filters, 78=circle, 100=perfect rectangle
+TARGET_RECTANGLE_SCORE_THRESHOLD=80.0 
+
+[climber]
+MOTOR_SLOT=-1
+MOTOR_CHANNEL=-4
+ENCODER_A_SLOT=-1
+ENCODER_A_CHANNEL=-1
+ENCODER_B_SLOT=-1
+ENCODER_B_CHANNEL=-1
+ENCODER_REVERSE=0
+ENCODER_TYPE=2
+ENCODER_THRESHOLD=10
+MOTOR_SAFETY_TIMEOUT=3.0
+INVERT_CONTROLS=1
+NORMAL_UP_SPEED_RATIO=1.0
+NORMAL_DOWN_SPEED_RATIO=1.0
+TURBO_UP_SPEED_RATIO=1.0
+TURBO_DOWN_SPEED_RATIO=1.0
+AUTO_FAR_SPEED_RATIO=1.0
+AUTO_MEDIUM_SPEED_RATIO=1.0
+AUTO_NEAR_SPEED_RATIO=1.0
+UP_DIRECTION=-1.0
+DOWN_DIRECTION=1.0
+TIME_THRESHOLD=0.1
+ENCODER_MAX_LIMIT=-1
+ENCODER_MIN_LIMIT=-1
+AUTO_MEDIUM_ENCODER_THRESHOLD=50
+AUTO_FAR_ENCODER_THRESHOLD=100
+AUTO_MEDIUM_TIME_THRESHOLD=0.5
+AUTO_FAR_TIME_THRESHOLD=1.0
+
+[userinterface]
+# DriverStation USB port for controller 1
+CONTROLLER1_PORT=1			
+# DriverStation USB port for controller 2
+CONTROLLER2_PORT=2			
+# number of axis on controller 1
+CONTROLLER1_AXIS=6			
+# number of axis on controller 2
+CONTROLLER2_AXIS=6			
+# number of buttons on controller 1
+CONTROLLER1_BUTTONS=10		
+# number of buttons on controller 2
+CONTROLLER2_BUTTONS=10		
+# region (absolute value) of all axis on controller 1 that are ignored as potential error
+CONTROLLER1_DEAD_BAND=0.05	
+# region (absolute value) of all axis on controller 2 that are ignored as potential error
+CONTROLLER2_DEAD_BAND=0.05    
+
+[technojays]
+# the rate for the periodic methods in the robot class, 0=sync with DriverStation
+PERIOD=0.01	                    
+# the amount of time to wait before trying to connect to the camera
+CAMERA_BOOT_TIME=30.0             
+# the amount of time required for the Targeting module to search for targets
+INITIAL_TARGET_SEARCH_TIME=1.5    
+# the amount of time to spin up the shooter before feeding a disc
+AUTO_SHOOTER_SPINUP_TIME=1.5      
+# the amount of time to spin down the shooter after feeding a disc
+AUTO_SHOOTER_SPINDOWN_TIME=0.5    
+# the angle of the shooter to allow the feeder the proper height for the feeder station
+AUTO_FEEDER_HEIGHT_ANGLE=35.0     
+# the angle of the shooter to be out of the way for climbing
+AUTO_CLIMBING_ANGLE=20.0          
+#
+AUTO_CLIMBING_ENCODER_COUNT=4850	
+#
+AUTO_CLIMB_BACKUP_SPEED=0.2		
+#
+AUTO_CLIMB_HEADSTART_ENCODER_COUNT=2500	
+#
+AUTO_CLIMB_WINCH_SPEED=0.5		
+#
+AUTO_CLIMB_WINCH_TIME=2.5			
+
+[feeder]
+PRESSURE_SWITCH_CHANNEL=1
+COMPRESSOR_RELAY_CHANNEL=1
+SOLENOID_CHANNEL=1
