@@ -3,10 +3,10 @@
 # Imports
 
 # If wpilib not available use pyfrc
-try
+try:
     import wpilib
 except ImportError:
-    import pyfrc as wpilib
+    from pyfrc import wpilib
 import common
 import datalog
 import parameters
