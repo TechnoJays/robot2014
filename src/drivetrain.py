@@ -724,7 +724,7 @@ class DriveTrain(object):
 
         self._robot_drive.TankDrive(left, right, False)
 
-    def turn_heading(self, heading, speed):
+    def set_heading(self, heading, speed):
         """Turns the robot left/right to face a specified heading.
 
         Using the gyro to keep track of the current heading, turns the robot

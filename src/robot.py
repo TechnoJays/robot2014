@@ -200,6 +200,8 @@ class MyRobot(wpilib.SimpleRobot):
             # Set all motors to be stopped (prevent motor safety errors)
             if self._drive_train:
                 self._drive_train.drive(0.0, 0.0, False)
+            if self._feeder:
+                self._feeder.feed(feeder.Direction.STOP)
             if self._shooter:
                 self._shooter.move(0.0)
             if (self._user_interface and self._autoscript and
@@ -264,6 +266,7 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Execute autoscript commands
             if self._autoscript and self._autoscript_filename:
+                # If we see either invalid or end, we're finished
                 if (self._current_command and
                     self._current_command.command != "invalid" and
                     self._current_command.command != "end")
@@ -317,10 +320,58 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
+                    elif self._current_command.command == "setheading":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 2 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if (self._drive_train.set_heading(
+                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[1])):
+                                self._current_command_complete = True
+                    elif self._current_command.command == "turntime":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 3 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if not self._current_command_in_progress:
+                                self._drive_train.reset_and_start_timer()
+                                self._current_command_in_progress = True
+                            if (self._drive_train.turn_time(
+                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[1],
+                                        self._current_command.parameters[2])):
+                                self._current_command_complete = True
 
+                    #TODO feeder
+                    #TODO shooter
+                    #TODO targeting?
+                    #TODO other autonomous?
 
+                    # Catchall - for any unrecognized command
+                    else:
+                        self._current_command_complete = True
 
+                    # Get next command if/when current one is finished
+                    if self._current_command_complete:
+                        self._current_command_complete = False
+                        self._current_command = (
+                                        self._autoscript.get_next_command())
                 else:
+                    autoscript_finished = True
+            else:
+                autoscript_finished = True
+
+            if autoscript_finished:
+                # Set all motors to inactive
+                if self._drive_train:
+                    self._drive_train.drive(0.0, 0.0, False)
+                if self._feeder:
+                    self._feeder.feed(feeder.Direction.STOP)
+                if self._shooter:
+                    self._shooter.move(0.0)
 
             self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
@@ -332,10 +383,18 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         # Perform initialization before looping
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.TELEOP)
+        if self._timer:
+            self._timer.stop()
         if self._drive_train:
             self._drive_train.set_robot_state(common.ProgramState.TELEOP)
+        if self._feeder:
+            self._feeder.set_robot_state(common.ProgramState.TELEOP)
+        if self._shooter:
+            self._shooter.set_robot_state(common.ProgramState.TELEOP)
+        #if self._targeting:
+        #    self._targeting.set_robot_state(common.ProgramState.TELEOP)
+        if self._user_interface:
+            self._user_interface.set_robot_state(common.ProgramState.TELEOP)
 
         dog = self.GetWatchdog()
         dog.SetEnabled(True)
