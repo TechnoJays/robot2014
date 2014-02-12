@@ -8,10 +8,15 @@ try:
 except ImportError:
     from pyfrc import wpilib
 
+import autoscript
 import common
 import datalog
 import drivetrain
+import feeder
 import parameters
+import shooter
+import stopwatch
+#import targeting
 import userinterface
 
 
@@ -27,14 +32,25 @@ class MyRobot(wpilib.SimpleRobot):
     # Public member variables
 
     # Private member objects
+    _autoscript = None
     _drive_train = None
+    _feeder = None
     _log = None
     _parameters = None
+    _shooter = None
+    #_targeting = None
+    _timer = None
     _user_interface = None
 
     # Private member variables
     _log_enabled = False
     _parameters_file = None
+    _current_command_complete = False
+    _current_command_in_progress = False
+    _current_command = None
+    _autoscript_file_counter = 0
+    _autoscript_filename = None
+    _autoscript_files = None
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -51,15 +67,25 @@ class MyRobot(wpilib.SimpleRobot):
         # Initialize public member variables
 
         # Initialize private member objects
+        self._autoscript = None
         self._drive_train = None
+        self._feeder = None
         self._log = None
         self._parameters = None
+        self._shooter = None
+        #self._targeting = None
+        self._timer = None
         self._user_interface = None
-
-        # Initialize private parameters
 
         # Initialize private member variables
         self._log_enabled = False
+        self._parameters_file = None
+        self._current_command_complete = False
+        self._current_command_in_progress = False
+        self._current_command = None
+        self._autoscript_file_counter = 0
+        self._autoscript_filename = None
+        self._autoscript_files = None
 
         # Enable logging if specified
         if logging_enabled:
@@ -68,16 +94,19 @@ class MyRobot(wpilib.SimpleRobot):
 
             if self._log and self._log.file_opened:
                 self._log_enabled = True
-            else:
-                self._log = None
+
+        self._timer = stopwatch.Stopwatch()
 
         # Read parameters file
         self._parameters_file = params
         self.load_parameters()
 
         # Create robot objects
+        self._autoscript = autoscript.AutoScript()
         self._drive_train = drivetrain.DriveTrain("drivetrain.par",
                 self._log_enabled)
+        self._feeder = feeder.Feeder("feeder.par", self._log_enabled)
+        self._shooter = shooter.Shooter("shooter.par", self._log_enabled)
         self._user_interface = userinterface.UserInterface("userinterface.par",
                 self._log_enabled)
 
@@ -137,18 +166,62 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         # Perform initialization before looping
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.DISABLED)
         if self._drive_train:
             self._drive_train.set_robot_state(common.ProgramState.DISABLED)
             self._drive_train.read_sensors()
+        if self._feeder:
+            self._feeder.set_robot_state(common.ProgramState.DISABLED)
+        if self._shooter:
+            self._shooter.set_robot_state(common.ProgramState.DISABLED)
+            self._shooter.read_sensors()
+        #if self._targeting:
+        #    self._targeting.set_robot_state(common.ProgramState.DISABLED)
+        if self._user_interface:
+            self._user_interface.set_robot_state(common.ProgramState.DISABLED)
 
+        # Get the list of autoscript files/routines
+        if self._autoscript:
+            self._autoscript_files = self._autoscript.get_available_scripts()
+            if self._autoscript_files and len(self._autoscript_files) > 0:
+                self._autoscript_file_counter = 0
+                self._autoscript_filename = self._autoscript_files[
+                                                self._autoscript_file_counter]
+                if self._user_interface:
+                    self._user_interface.output_user_message(
+                                                self._autoscript_filename,
+                                                True)
+
+        if self._timer:
+            self._timer.stop()
+            self._timer.start()
 
         # Repeat this loop as long as we're in Disabled
         while self.IsDisabled():
             # Set all motors to be stopped (prevent motor safety errors)
             if self._drive_train:
-                self._drive_train.Drive(0.0, 0.0, False)
+                self._drive_train.drive(0.0, 0.0, False)
+            if self._shooter:
+                self._shooter.move(0.0)
+            if (self._user_interface and self._autoscript and
+                self._autoscript_files and len(self._autoscript_files) > 0):
+                if (self._user_interface.get_button_state(
+                                    userinterface.UserControllers.DRIVER,
+                                    userinterface.JoystickButtons.START) == 1
+                    and self._user_interface.button_state_changed(
+                                    userinterface.UserControllers.DRIVER,
+                                    userinterface.JoystickButtons.START)):
+                    self._autoscript_file_counter += 1
+                    if (self._autoscript_file_counter >
+                        (len(self._autoscript_files) - 1)):
+                        self._autoscript_file_counter = 0
+                    self._autoscript_filename = self._autoscript_files[
+                                                  self._autoscript_file_counter]
+                    self._user_interface.output_user_message(
+                                                self._autoscript_filename,
+                                                True)
+                self._user_interface.store_button_states(
+                                        user_interface.UserControllers.DRIVER)
+
             self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
 
@@ -159,14 +232,96 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         # Perform initialization before looping
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.AUTONOMOUS)
+        if self._timer:
+            self._timer.stop()
+        if self._autoscript and self._autoscript_filename:
+            self._autoscript.parse(self._autoscript_filename)
+            self._current_command_complete = False
+            self._current_command_in_progress = False
+            self._current_command = self._autoscript.get_next_command()
         if self._drive_train:
             self._drive_train.set_robot_state(common.ProgramState.AUTONOMOUS)
+        if self._feeder:
+            self._feeder.set_robot_state(common.ProgramState.AUTONOMOUS)
+        if self._shooter:
+            self._shooter.set_robot_state(common.ProgramState.AUTONOMOUS)
+        #if self._targeting:
+        #    self._targeting.set_robot_state(common.ProgramState.AUTONOMOUS)
+        if self._user_interface:
+            self._user_interface.set_robot_state(common.ProgramState.AUTONOMOUS)
 
         # Repeat this loop as long as we're in Autonomous
         self.GetWatchdog().SetEnabled(False)
         while self.IsAutonomous() and self.IsEnabled():
+            autoscript_finished = False
+            self._current_command_complete = False
+
+            # Read sensors
+            if self._drive_train:
+                self._drive_train.read_sensors()
+            if self._shooter:
+                self._shooter.read_sensors()
+
+            # Execute autoscript commands
+            if self._autoscript and self._autoscript_filename:
+                if (self._current_command and
+                    self._current_command.command != "invalid" and
+                    self._current_command.command != "end")
+                    if self._current_command.command == "wait":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 1 or
+                            not self._timer):
+                            self._current_command_complete = True
+                        else:
+                            if not self._current_command_in_progress:
+                                self._timer.stop()
+                                self._timer.start()
+                                self._current_command_in_progress = True
+                            elapsed_time = self._timer.elapsed_time_in_secs()
+                            time_left = (self._current_command.parameters[0] -
+                                         elapsed_time)
+                            if time_left < 0:
+                                self._timer.stop()
+                                self._current_command_complete = True
+                    elif self._current_command.command == "adjustheading":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 2 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if (self._drive_train.adjust_heading(
+                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[1])):
+                                self._current_command_complete = True
+                    elif self._current_command.command == "drivedistance":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 2 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if (self._drive_train.drive_distance(
+                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[1])):
+                                self._current_command_complete = True
+                    elif self._current_command.command == "drivetime":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 3 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if not self._current_command_in_progress:
+                                self._drive_train.reset_and_start_timer()
+                                self._current_command_in_progress = True
+                            if (self._drive_train.drive_time(
+                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[1],
+                                        self._current_command.parameters[2])):
+                                self._current_command_complete = True
+
+
+
+                else:
+
             self._check_restart()  #TODO - only include while testing
             wpilib.Wait(0.01)
 
