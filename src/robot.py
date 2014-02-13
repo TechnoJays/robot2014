@@ -51,6 +51,8 @@ class MyRobot(wpilib.SimpleRobot):
     _autoscript_file_counter = 0
     _autoscript_filename = None
     _autoscript_files = None
+    _driver_alternate = False
+    _scoring_alternate = False
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -86,6 +88,8 @@ class MyRobot(wpilib.SimpleRobot):
         self._autoscript_file_counter = 0
         self._autoscript_filename = None
         self._autoscript_files = None
+        self._driver_alternate = False
+        self._scoring_alternate = False
 
         # Enable logging if specified
         if logging_enabled:
@@ -408,8 +412,11 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             if self._drive_train:
                 self._drive_train.read_sensors()
+            if self._shooter:
+                self._shooter.read_sensors()
 
             # Perform autonomous actions
+            # TODO
 
             # Perform user controlled actions
             if self._user_interface:
@@ -430,13 +437,68 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickAxis.DPADY)
 
+                # Check for alternate speed mode
+                if (self._user_interface.get_button_state(
+                                user_interface.UserControllers.DRIVER,
+                                user_interface.JoystickButtons.RIGHTBUMPER)
+                    == 1):
+                    self._driver_alternate = True
+                else:
+                    self._driver_alternate = False
+                if (self._user_interface.get_button_state(
+                                user_interface.UserControllers.SCORING,
+                                user_interface.JoystickButtons.RIGHTBUMPER)
+                    == 1):
+                    self._scoring_alternate = True
+                else:
+                    self._scoring_alternate = False
+
+                # Check if encoder soft limits should be ignored
+                if (self._user_interface.get_button_state(
+                                user_interface.UserControllers.SCORING,
+                                user_interface.JoystickButtons.LEFTBUMPER)
+                    == 1):
+                    self._shooter.ignore_limits(True)
+                else:
+                    self._shooter.ignore_limits(False)
+
+                # Check if any teleop autonomous routines are requested
+                # TODO
+
+
                 # Manually control the robot
+                # Drive train
                 if driver_left_y != 0.0 or driver_right_y != 0.0:
+                    #TODO: abort any relevent teleop auto routines
                     if self._drive_train:
                         self._drive_train.tank_drive(driver_left_y,
                                 driver_right_y, False)
                 else:
+                    #TODO: make sure we don't mess with any teleop auto routines
+                    # if they're running
                     self._drive_train.tank_drive(0.0, 0.0, False)
+
+                # TODO Shooter
+                # TODO Feeder
+
+                # Print debug info to driver station
+                if (self._user_interface.get_button_state(
+                                user_interface.UserControllers.SCORING,
+                                user_interface.JoystickButtons.BACK) == 1 and
+                    self._user_interface.button_state_changed(
+                                user_interface.UserControllers.SCORING,
+                                user_interface.JoystickButtons.BACK)):
+                    self._user_interface.output_user_message("Diagnostics",
+                                                             True)
+                    if self._drive_train:
+                        self._drive_train.log_current_state()
+                        state = self._drive_train.get_current_state()
+                        self._user_interface.output_user_message(state, False)
+                    if self._shooter:
+                        self._shooter.log_current_state()
+                        state = self._shooter.get_current_state()
+                        self._user_interface.output_user_message(state, False)
+
 
                 # Update/store the UI button state
                 self._user_interface.store_button_states(
@@ -449,9 +511,12 @@ class MyRobot(wpilib.SimpleRobot):
 
     def _check_restart(self):
         """Monitor user input for a restart request."""
-        #if lstick.GetRawButton(10):
-        #    raise RuntimeError("Restart")
-        #TODO
+        #TODO comment out when in competitions
+        if (self._user_interface.get_button_state(
+                        user_interface.UserControllers.SCORING,
+                        user_interface.JoystickButtons.START) == 1):
+            raise RuntimeError("Restart")
+
 
 
 def run():
