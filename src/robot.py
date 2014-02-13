@@ -134,7 +134,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._parameters = parameters.Parameters(self._parameters_file)
         if self._parameters and self._parameters.file_opened:
             parameters_read = self._parameters.read_values()
-            self._parameters.close()
+            self._parameters.close() #TODO remove?
 
         if self._log_enabled:
             if parameters_read:
@@ -273,7 +273,7 @@ class MyRobot(wpilib.SimpleRobot):
                 # If we see either invalid or end, we're finished
                 if (self._current_command and
                     self._current_command.command != "invalid" and
-                    self._current_command.command != "end")
+                    self._current_command.command != "end"):
                     if self._current_command.command == "wait":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 1 or
@@ -297,7 +297,7 @@ class MyRobot(wpilib.SimpleRobot):
                             self._current_command_complete = True
                         else:
                             if (self._drive_train.adjust_heading(
-                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
                     elif self._current_command.command == "drivedistance":
@@ -307,7 +307,7 @@ class MyRobot(wpilib.SimpleRobot):
                             self._current_command_complete = True
                         else:
                             if (self._drive_train.drive_distance(
-                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
                     elif self._current_command.command == "drivetime":
@@ -320,7 +320,7 @@ class MyRobot(wpilib.SimpleRobot):
                                 self._drive_train.reset_and_start_timer()
                                 self._current_command_in_progress = True
                             if (self._drive_train.drive_time(
-                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[0],
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
@@ -331,7 +331,7 @@ class MyRobot(wpilib.SimpleRobot):
                             self._current_command_complete = True
                         else:
                             if (self._drive_train.set_heading(
-                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
                     elif self._current_command.command == "turntime":
@@ -344,7 +344,7 @@ class MyRobot(wpilib.SimpleRobot):
                                 self._drive_train.reset_and_start_timer()
                                 self._current_command_in_progress = True
                             if (self._drive_train.turn_time(
-                                        self._current_command.parameters[0]
+                                        self._current_command.parameters[0],
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
