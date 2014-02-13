@@ -228,7 +228,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._user_interface.store_button_states(
                                         user_interface.UserControllers.DRIVER)
 
-            self._check_restart()  #TODO - only include while testing
+            self._check_restart()
             wpilib.Wait(0.01)
 
     def Autonomous(self):
@@ -377,7 +377,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._shooter:
                     self._shooter.move(0.0)
 
-            self._check_restart()  #TODO - only include while testing
+            self._check_restart()
             wpilib.Wait(0.01)
 
     def OperatorControl(self):
@@ -415,7 +415,7 @@ class MyRobot(wpilib.SimpleRobot):
             if self._shooter:
                 self._shooter.read_sensors()
 
-            # Perform autonomous actions
+            # Perform teleop autonomous actions
             # TODO
 
             # Perform user controlled actions
@@ -506,7 +506,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._user_interface.store_button_states(
                         userinterface.UserControllers.SCORING)
 
-            self._check_restart()  #TODO - only include while testing
+            self._check_restart()
             wpilib.Wait(0.01)
 
     def _check_restart(self):
