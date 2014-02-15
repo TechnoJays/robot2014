@@ -2,7 +2,11 @@
 
 
 # Imports
-import wpilib
+# If wpilib not available use pyfrc
+try:
+    import wpilib
+except ImportError:
+    from pyfrc import wpilib
 import os
 
 
@@ -38,7 +42,6 @@ class DataLog(object):
     _timestamp = None
     _parameter = None
     _value = None
-    _get_msec_time =(wpilib.time.GetFPGATimestamp()/1000)
 
     def __init__(self, file_name="datalog.txt", mode="w"):
         """Initialize data log"""
@@ -56,7 +59,6 @@ class DataLog(object):
         self._timestamp = False
         self._parameter = None
         self._value = None
-        self._get_msec_time =(wiblib.time.GetFPGATimestamp()/1000)
 
         self._open(mode)
 
@@ -70,7 +72,7 @@ class DataLog(object):
 
         """
         self._mode = mode
-        self._fo = open(self.file_name, self.mode)
+        self._fo = open(self._file_name, self._mode)
         self.file_opened = not self._fo.closed
 
     def delete(self):
@@ -84,11 +86,11 @@ class DataLog(object):
         closing the file and flags the file is closed.
 
         """
-        if self._file_name = None and self.file_opened == True:
+        if not self._file_name and self.file_opened:
             self._fo.close()
             self.file_opened = False
         else:
-            print ("Close File Error: No file opened.")
+            print("Close File Error: No file opened.")
 
     def write_line(self, line, timestamp):
         """Writes a line of text
@@ -97,11 +99,11 @@ class DataLog(object):
         if timestamp is True add Timestamp before line of text
         """
         self._line = str(line)
-        if timestamp == True:
-            self._time = str(self._get_msec_time)
-            self._fo.write("%s", %(self._time))
+        if timestamp:
+            current_time = str(wpilib.time.GetFPGATimestamp() / 1000.0)
+            self._fo.write("%s" % current_time)
         else:
-        self._fo.write("   %s/n", %(self._line))
+            self._fo.write("   %s/n" % self._line)
 
     def write_value(self, parameter, value, timestamp):
         """Writes the parameter and value to the open text file
@@ -110,9 +112,9 @@ class DataLog(object):
         """
         self._parameter = str(parameter)
         self._value = str(value)
-        if timestamp == True:
-            self._time = str(self._get_msec_time)
-            self._fo.write("%s", %(self._time))
+        if timestamp:
+            current_time = str(wpilib.time.GetFPGATimestamp() / 1000.0)
+            self._fo.write("%s" % current_time)
         else:
-        self._fo.write("   %s = %s/n" %(self._parameter, self.value))
+            self._fo.write("   %s = %s/n" % (self._parameter, self._value))
 
