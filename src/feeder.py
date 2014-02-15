@@ -10,6 +10,7 @@ except ImportError:
 import common
 import datalog
 import parameters
+import stopwatch
 
 
 class Direction(object):
@@ -46,6 +47,7 @@ class Feeder(object):
     _compressor = None
     _left_arm = None
     _log = None
+    _movement_timer = None
     _parameters = None
     _right_arm = None
     _solenoid = None
@@ -53,6 +55,7 @@ class Feeder(object):
     # Private parameters
     _clockwise = None
     _counter_clockwise = None
+    _time_threshold = 0
 
     # Private member variables
     _log_enabled = False
@@ -88,6 +91,7 @@ class Feeder(object):
         self._solenoid = None
         self._left_arm = None
         self._right_arm = None
+        self._movement_timer = None
 
     def _initialize(self, params, logging_enabled):
         """Initialize and configure a Feeder object.
@@ -115,10 +119,12 @@ class Feeder(object):
         self._solenoid = None
         self._left_arm = None
         self._right_arm = None
+        self._movement_timer = None
 
         # Initialize private parameters
         self._clockwise = None
         self._counter_clockwise = None
+        self._time_threshold = 0.1
 
         # Initialize private member variables
         self._log_enabled = False
@@ -133,6 +139,8 @@ class Feeder(object):
                 self._log_enabled = True
             else:
                 self._log = None
+
+        self._movement_timer = stopwatch.Stopwatch()
 
         # Read parameters file
         self._parameters_file = params
@@ -186,6 +194,8 @@ class Feeder(object):
                                                 "CLOCKWISE")
             self._counter_clockwise = self._parameters.get_value(section,
                                                 "COUNTER_CLOCKWISE")
+            self._time_threshold = self._parameters.get_value(section,
+                                                "TIME_THRESHOLD")
 
         # Create the compressor object if the channel is greater than 0
         self.compressor_enabled = False
@@ -245,6 +255,10 @@ class Feeder(object):
         """
         self._robot_state = state
 
+        # Clear the movement time
+        if self._movement_timer:
+            self._movement_timer.stop()
+
         # Make sure the compressor is running in every state
         if self.compressor_enabled:
             if not self._compressor.Enabled():
@@ -268,6 +282,12 @@ class Feeder(object):
             self._log_enabled = True
         else:
             self._log_enabled = False
+
+    def reset_and_start_timer(self):
+        """Resets and restarts the timer for time based movement."""
+        if self._movement_timer:
+            self._movement_timer.stop()
+            self._movement_timer.start()
 
     def set_position(self, direction):
         """Set the feeder arms up or down.
@@ -305,4 +325,49 @@ class Feeder(object):
                 self._right_arm.Set(0.0, 0)
             if self.left_arm_enabled:
                 self._left_arm.Set(0.0, 0)
+
+    def feed_time(self, time, direction, speed):
+        """Controls the feeder arms for a time duration.
+
+        Using a timer, turns the robot arms in or out for a certain time
+        duration.
+
+        Args:
+            time: the amount of time to feed.
+            direction: the direction to feed.
+            speed: the motor speed ratio.
+
+        Returns:
+            True when the time duration has been reached.
+        """
+        # Abort if feeder or timer is not available
+        if not self.feeder_enabled or not self._movement_timer:
+            return True
+
+        # Get the timer value since we started moving
+        elapsed_time = self._movement_timer.elapsed_time_in_secs()
+
+        # Calculate time left to turn
+        time_left = time - elapsed_time
+
+        # Check if we've fed long enough
+        if time_left < self._time_threshold or time_left < 0:
+            if self.right_arm_enabled:
+                self._right_arm.Set(0.0, 0)
+            if self.left_arm_enabled:
+                self._left_arm.Set(0.0, 0)
+            self._movement_timer.stop()
+            return True
+        else:
+            if direction == Direction.IN:
+                if self.right_arm_enabled:
+                    self._right_arm.Set(self._clockwise * speed, 0)
+                if self.left_arm_enabled:
+                    self._left_arm.Set(self._counter_clockwise * speed, 0)
+            elif direction == Direction.OUT:
+                if self.right_arm_enabled:
+                    self._right_arm.Set(self._counter_clockwise * speed, 0)
+                if self.left_arm_enabled:
+                    self._left_arm.Set(self._clockwise * speed, 0)
+        return False
 

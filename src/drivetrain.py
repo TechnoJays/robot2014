@@ -235,7 +235,6 @@ class DriveTrain(object):
         self._right_controller = None
         self._accelerometer = None
         self._gyro = None
-        self._movement_timer = None
         self._acceleration_timer = None
 
         # Read the parameters file

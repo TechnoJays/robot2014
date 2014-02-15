@@ -339,8 +339,30 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
+                    elif self._current_command.command == "setfeederposition":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 1 or
+                            not self._feeder):
+                            self._current_command_complete = True
+                        else:
+                            self._feeder.set_position(
+                                        self._current_command.parameters[0])
+                            self._current_command_complete = True
+                    elif self._current_command.command == "feedtime":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 3 or
+                            not self._feeder):
+                            self._current_command_complete = True
+                        else:
+                            if not self._current_command_in_progress:
+                                self._feeder.reset_and_start_timer()
+                                self._current_command_in_progress = True
+                            if (self._feeder.feed_time(
+                                        self._current_command.parameters[0],
+                                        self._current_command.parameters[1],
+                                        self._current_command.parameters[2])):
+                                self._current_command_complete = True
 
-                    #TODO feeder
                     #TODO shooter
                     #TODO targeting?
                     #TODO other autonomous?
