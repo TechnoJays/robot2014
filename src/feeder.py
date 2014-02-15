@@ -13,22 +13,25 @@ import parameters
 
 
 class Direction(object):
-	STOP = 0
-	IN = 1
-	OUT = 2
-	
-class Feeder(object):
-    """A mechanism that feeds frisbees to a shooter.
+    STOP = 0
+    IN = 1
+    OUT = 2
 
-    This class desribes a feeder mechanism that uses an air compressor and a
-    solenoid to push a frisbee into the shooting mechanism.  A relay is used
-    to turn the compressor on and off, which powers a solenoid piston that does
-    the actual pushing.
+
+class Feeder(object):
+    """A mechanism that pulls balls into a shooter.
+
+    This class desribes a feeder mechanism that uses two arms with spinning
+    arms to pull balls into the robot.  The arms are raised and lowered using
+    compressed air and a solenoid.  A relay is used to turn the compressor on
+    and off.
 
     Attributes:
         feeder_enabled: True if the feeder is fully functional (default False).
         compressor_enabled: True if compressor is functional (default False).
         solenoid_enabled: True if the solenoid is functional (default False).
+        left_arm_enabled: True if the left arm is functional (default False).
+        right_arm_enabled: True if the right arm is functional (default False).
 
     """
     # Public member variables
@@ -38,14 +41,17 @@ class Feeder(object):
     left_arm_enabled = False
     right_arm_enabled = False
 
-
     # Private member objects
     _compressor = None
+    _left_arm = None
     _log = None
     _parameters = None
-    _piston = None
-    _left_arm = None
     _right_arm = None
+    _solenoid = None
+
+    # Private parameters
+    _clockwise = None
+    _counter_clockwise = None
 
     # Private member variables
     _log_enabled = False
@@ -53,7 +59,7 @@ class Feeder(object):
     _robot_state = common.ProgramState.DISABLED
 
     def __init__(self, params="feeder.par", logging_enabled=False):
-        """Create and initialize a frisbee feeder.
+        """Create and initialize a ball feeder.
 
         Instantiate a feeder and specify a parameters file and whether logging
         is enabled or disabled.
@@ -78,7 +84,7 @@ class Feeder(object):
         self._log = None
         self._parameters = None
         self._compressor = None
-        self._piston = None
+        self._solenoid = None
         self._left_arm = None
         self._right_arm = None
 
@@ -98,16 +104,20 @@ class Feeder(object):
         self.feeder_enabled = False
         self.compressor_enabled = False
         self.solenoid_enabled = False
+        self.left_arm_enabled = False
+        self.right_arm_enabled = False
 
         # Initialize private member objects
         self._log = None
         self._parameters = None
         self._compressor = None
-        self._piston = None
+        self._solenoid = None
         self._left_arm = None
         self._right_arm = None
 
         # Initialize private parameters
+        self._clockwise = None
+        self._counter_clockwise = None
 
         # Initialize private member variables
         self._log_enabled = False
@@ -141,12 +151,18 @@ class Feeder(object):
         pressure_switch_channel = -1
         compressor_relay_channel = -1
         solenoid_channel = -1
+        left_arm_channel_channel = -1
+        right_arm_channel_channel = -1
         parameters_read = False
+
+        # Initialize private parameters
+        self._clockwise = 1.0
+        self._counter_clockwise = -1.0
 
         # Close and delete old objects
         self._parameters = None
         self._compressor = None
-        self._piston = None
+        self._solenoid = None
         self._left_arm = None
         self._right_arm = None
 
@@ -168,13 +184,12 @@ class Feeder(object):
                     "PRESSURE_SWITCH_CHANNEL")
             compressor_relay_channel = self._parameters.get_value(
                     "COMPRESSOR_RELAY_CHANNEL")
-            solenoid_channel = self._parameters.get_value(
-                    "SOLENOID_CHANNEL")
-            right_arm_channel = self._parameters.get_value(
-                    "RIGHT_ARM_CHANNEL")
-            left_arm_channel = self._parameters.get_value(
-                    "LEFT_ARM_CHANNEL")
-
+            solenoid_channel = self._parameters.get_value("SOLENOID_CHANNEL")
+            right_arm_channel = self._parameters.get_value("RIGHT_ARM_CHANNEL")
+            left_arm_channel = self._parameters.get_value("LEFT_ARM_CHANNEL")
+            self._clockwise = self._parameters.get_value("CLOCKWISE")
+            self._counter_clockwise = self._parameters.get_value(
+                    "COUNTER_CLOCKWISE")
 
         # Create the compressor object if the channel is greater than 0
         self.compressor_enabled = False
@@ -183,13 +198,17 @@ class Feeder(object):
                     compressor_relay_channel)
             if self._compressor:
                 self.compressor_enabled = True
+                if self._log_enabled:
+                    self._log.write_line("Compressor enabled")
 
         # Create the solenoid object if the channel is greater than 0
         self.solenoid_enabled = False
         if solenoid_channel > 0:
-            self._piston = wpilib.Solenoid(solenoid_channel)
-            if self._piston:
+            self._solenoid = wpilib.Solenoid(solenoid_channel)
+            if self._solenoid:
                 self.solenoid_enabled = True
+                if self._log_enabled:
+                    self._log.write_line("Solenoid enabled")
 
         # Create the motor controller objects if the channels are greater than 0
         self.right_arm_enabled = False
@@ -200,29 +219,21 @@ class Feeder(object):
             self._left_arm = wpilib.Jaguar(left_arm_channel)
         if self._right_arm:
             self.right_arm_enabled = True
+            if self._log_enabled:
+                self._log.write_line("Right arm enabled")
         if self._left_arm:
             self.left_arm_enabled = True
+            if self._log_enabled:
+                self._log.write_line("Left arm enabled")
 
-        # If both the compressor and solenoid are enabled, the feeder is
-        # fully functional
-        if self.compressor_enabled and self.solenoid_enabled:
+        # If the compressor, solenoid,and one of the arms are enabled,
+        # the feeder is fully functional
+        self.feeder_enabled = False
+        if (self.compressor_enabled and self.solenoid_enabled and
+            (self.left_arm_enabled or self.right_arm_enabled)):
             self.feeder_enabled = True
-        else:
-            self.feeder_enabled = False
-
-        if self._log_enabled:
-            if self.compressor_enabled:
-                self._log.write_line("Compressor enabled")
-            else:
-                self._log.write_line("Compressor disabled")
-            if self.solenoid_enabled:
-                self._log.write_line("Solenoid enabled")
-            else:
-                self._log.write_line("Solenoid disabled")
-            if self.feeder_enabled:
+            if self._log_enabled:
                 self._log.write_line("Feeder enabled")
-            else:
-                self._log.write_line("Feeder disabled")
 
         return parameters_read
 
@@ -262,26 +273,26 @@ class Feeder(object):
         else:
             self._log_enabled = False
 
-	def set_position(self, direction):
-		"""Setting the feeder arms up or down.
-		
-		Args: 
-			direction: common.Direction enumeration of up or down.
-			
-		"""
-		if self.solenoid_enabled:	
-			if direction == common.Direction.UP:
-				self._solenoid.Set(False) 
-			elif direction == common.Direction.DOWN:
-				self._solenoid.Set(True)
-				
-	def feed(self, direction, speed):
-        """Conrolling the arm that feed the ball into the robot.
-        
-        Args: 
+    def set_position(self, direction):
+        """Set the feeder arms up or down.
+
+        Args:
+            direction: common.Direction enumeration of up or down.
+
+        """
+        if self.solenoid_enabled and self.compressor_enabled:
+            if direction == common.Direction.UP:
+                self._solenoid.Set(False)
+            elif direction == common.Direction.DOWN:
+                self._solenoid.Set(True)
+
+    def feed(self, direction, speed):
+        """Conrol the arm that feed the ball into the robot.
+
+        Args:
             direction: Direction enumeration of in, out, stop.
-            speed: the speed that you feed that ball.
-            
+            speed: The speed that you feed that ball.
+
         """
         if direction == Direction.IN:
             if self.right_arm_enabled:
@@ -298,17 +309,4 @@ class Feeder(object):
                 self._right_arm.Set(0.0, 0)
             if self.left_arm_enabled:
                 self._left_arm.Set(0.0, 0)
-            		
-    def set_piston(self, state):
-        """Set the state of the feeder piston.
-
-        Setting to True will extend the piston, False will retract the piston.
-        This uses the solenoid powered by compressed air.
-
-        Args:
-            state: True if the piston is extended.
-
-        """
-        if self.feeder_enabled and self.solenoid_enabled:
-            self._piston.Set(state)
 
