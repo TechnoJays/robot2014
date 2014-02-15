@@ -227,7 +227,6 @@ class DriveTrain(object):
         gyro_channel = -1
         gyro_sensitivity = 0.007
         motor_safety_timeout = 2.0
-        parameters_read = False
 
         # Close and delete old objects
         self._parameters = None
@@ -241,92 +240,105 @@ class DriveTrain(object):
 
         # Read the parameters file
         self._parameters = parameters.Parameters(self._parameters_file)
-        if self._parameters and self._parameters.file_opened:
-            parameters_read = self._parameters.read_values()
-            self._parameters.close()
-
-        if self._log_enabled:
-            if parameters_read:
-                self._log.write_line(
-                        "DriveTrain parameters loaded successfully")
-            else:
-                self._log.write_line("Failed to read DriveTrain parameters")
+        section = __name__.lower()
 
         # Store parameters from the file to local variables
-        if parameters_read:
-            left_motor_slot = self._parameters.get_value("LEFT_MOTOR_SLOT")
-            left_motor_channel = self._parameters.get_value(
-                    "LEFT_MOTOR_CHANNEL")
-            left_motor_inverted = self._parameters.get_value(
-                    "LEFT_MOTOR_INVERTED")
-            right_motor_slot = self._parameters.get_value(
-                    "RIGHT_MOTOR_SLOT")
-            right_motor_channel = self._parameters.get_value(
-                    "RIGHT_MOTOR_CHANNEL")
-            right_motor_inverted = self._parameters.get_value(
-                    "RIGHT_MOTOR_INVERTED")
-            motor_safety_timeout = self._parameters.get_value(
-                    "MOTOR_SAFETY_TIMEOUT")
-            accelerometer_slot = self._parameters.get_value(
-                    "ACCELEROMETER_SLOT")
-            accelerometer_range = self._parameters.get_value(
-                    "ACCELEROMETER_RANGE")
-            self._accelerometer_axis = self._parameters.get_value(
-                    "ACCELEROMETER_AXIS")
-            gyro_channel = self._parameters.get_value("GYRO_CHANNEL")
-            gyro_sensitivity = self._parameters.get_value("GYRO_SENSITIVITY")
-            self._forward_direction = self._parameters.get_value(
-                    "FORWARD_DIRECTION")
-            self._backward_direction = self._parameters.get_value(
-                    "BACKWARD_DIRECTION")
-            self._left_direction = self._parameters.get_value("LEFT_DIRECTION")
-            self._right_direction = self._parameters.get_value(
-                    "RIGHT_DIRECTION")
+        if self._parameters:
+            left_motor_slot = self._parameters.get_value(section,
+                                            "LEFT_MOTOR_SLOT")
+            left_motor_channel = self._parameters.get_value(section,
+                                            "LEFT_MOTOR_CHANNEL")
+            left_motor_inverted = self._parameters.get_value(section,
+                                            "LEFT_MOTOR_INVERTED")
+            right_motor_slot = self._parameters.get_value(section,
+                                            "RIGHT_MOTOR_SLOT")
+            right_motor_channel = self._parameters.get_value(section,
+                                            "RIGHT_MOTOR_CHANNEL")
+            right_motor_inverted = self._parameters.get_value(section,
+                                            "RIGHT_MOTOR_INVERTED")
+            motor_safety_timeout = self._parameters.get_value(section,
+                                            "MOTOR_SAFETY_TIMEOUT")
+            accelerometer_slot = self._parameters.get_value(section,
+                                            "ACCELEROMETER_SLOT")
+            accelerometer_range = self._parameters.get_value(section,
+                                            "ACCELEROMETER_RANGE")
+            self._accelerometer_axis = self._parameters.get_value(section,
+                                            "ACCELEROMETER_AXIS")
+            gyro_channel = self._parameters.get_value(section,
+                                            "GYRO_CHANNEL")
+            gyro_sensitivity = self._parameters.get_value(section,
+                                            "GYRO_SENSITIVITY")
+            self._forward_direction = self._parameters.get_value(section,
+                                            "FORWARD_DIRECTION")
+            self._backward_direction = self._parameters.get_value(section,
+                                            "BACKWARD_DIRECTION")
+            self._left_direction = self._parameters.get_value(section,
+                                            "LEFT_DIRECTION")
+            self._right_direction = self._parameters.get_value(section,
+                                            "RIGHT_DIRECTION")
             self._normal_linear_speed_ratio = self._parameters.get_value(
-                    "NORMAL_LINEAR_SPEED_RATIO")
+                                            section,
+                                            "NORMAL_LINEAR_SPEED_RATIO")
             self._alternate_linear_speed_ratio = self._parameters.get_value(
-                    "ALTERNATE_LINEAR_SPEED_RATIO")
+                                            section,
+                                            "ALTERNATE_LINEAR_SPEED_RATIO")
             self._normal_turning_speed_ratio = self._parameters.get_value(
-                    "NORMAL_TURNING_SPEED_RATIO")
+                                            section,
+                                            "NORMAL_TURNING_SPEED_RATIO")
             self._alternate_turning_speed_ratio = self._parameters.get_value(
-                    "ALTERNATE_TURNING_SPEED_RATIO")
+                                            section,
+                                            "ALTERNATE_TURNING_SPEED_RATIO")
             self._auto_far_linear_speed_ratio = self._parameters.get_value(
-                    "AUTO_FAR_LINEAR_SPEED_RATIO")
+                                            section,
+                                            "AUTO_FAR_LINEAR_SPEED_RATIO")
             self._auto_medium_linear_speed_ratio = self._parameters.get_value(
-                    "AUTO_MEDIUM_LINEAR_SPEED_RATIO")
+                                            section,
+                                            "AUTO_MEDIUM_LINEAR_SPEED_RATIO")
             self._auto_near_linear_speed_ratio = self._parameters.get_value(
-                    "AUTO_NEAR_LINEAR_SPEED_RATIO")
+                                            section,
+                                            "AUTO_NEAR_LINEAR_SPEED_RATIO")
             self._auto_far_turning_speed_ratio = self._parameters.get_value(
-                    "AUTO_FAR_TURNING_SPEED_RATIO")
+                                            section,
+                                            "AUTO_FAR_TURNING_SPEED_RATIO")
             self._auto_medium_turning_speed_ratio = self._parameters.get_value(
-                    "AUTO_MEDIUM_TURNING_SPEED_RATIO")
+                                            section,
+                                            "AUTO_MEDIUM_TURNING_SPEED_RATIO")
             self._auto_near_turning_speed_ratio = self._parameters.get_value(
-                    "AUTO_NEAR_TURNING_SPEED_RATIO")
-            self._distance_threshold = self._parameters.get_value(
-                    "DISTANCE_THRESHOLD")
-            self._heading_threshold = self._parameters.get_value(
-                    "HEADING_THRESHOLD")
-            self._time_threshold = self._parameters.get_value("TIME_THRESHOLD")
+                                            section,
+                                            "AUTO_NEAR_TURNING_SPEED_RATIO")
+            self._distance_threshold = self._parameters.get_value(section,
+                                            "DISTANCE_THRESHOLD")
+            self._heading_threshold = self._parameters.get_value(section,
+                                            "HEADING_THRESHOLD")
+            self._time_threshold = self._parameters.get_value(section,
+                                            "TIME_THRESHOLD")
             self._auto_medium_time_threshold = self._parameters.get_value(
-                    "AUTO_MEDIUM_TIME_THRESHOLD")
-            self._auto_far_time_threshold = self._parameters.get_value(
-                    "AUTO_FAR_TIME_THRESHOLD")
+                                            section,
+                                            "AUTO_MEDIUM_TIME_THRESHOLD")
+            self._auto_far_time_threshold = self._parameters.get_value(section,
+                                            "AUTO_FAR_TIME_THRESHOLD")
             self._auto_medium_distance_threshold = self._parameters.get_value(
-                    "AUTO_MEDIUM_DISTANCE_THRESHOLD")
+                                            section,
+                                            "AUTO_MEDIUM_DISTANCE_THRESHOLD")
             self._auto_far_distance_threshold = self._parameters.get_value(
-                    "AUTO_FAR_DISTANCE_THRESHOLD")
+                                            section,
+                                            "AUTO_FAR_DISTANCE_THRESHOLD")
             self._auto_medium_heading_threshold = self._parameters.get_value(
-                    "AUTO_MEDIUM_HEADING_THRESHOLD")
+                                            section,
+                                            "AUTO_MEDIUM_HEADING_THRESHOLD")
             self._auto_far_heading_threshold = self._parameters.get_value(
-                    "AUTO_FAR_HEADING_THRESHOLD")
+                                            section,
+                                            "AUTO_FAR_HEADING_THRESHOLD")
             self._maximum_linear_speed_change = self._parameters.get_value(
-                    "MAXIMUM_LINEAR_SPEED_CHANGE")
+                                            section,
+                                            "MAXIMUM_LINEAR_SPEED_CHANGE")
             self._maximum_turn_speed_change = self._parameters.get_value(
-                    "MAXIMUM_TURN_SPEED_CHANGE")
-            self._linear_filter_constant = self._parameters.get_value(
-                    "LINEAR_FILTER_CONSTANT")
-            self._turn_filter_constant = self._parameters.get_value(
-                    "TURN_FILTER_CONSTANT")
+                                            section,
+                                            "MAXIMUM_TURN_SPEED_CHANGE")
+            self._linear_filter_constant = self._parameters.get_value(section,
+                                            "LINEAR_FILTER_CONSTANT")
+            self._turn_filter_constant = self._parameters.get_value(section,
+                                            "TURN_FILTER_CONSTANT")
 
         # Check if the accelerometer is present/enabled
         self.accelerometer_enabled = False
@@ -378,7 +390,7 @@ class DriveTrain(object):
             else:
                 self._log.WriteLine("Gyro disabled\n")
 
-        return parameters_read
+        return True
 
     def set_robot_state(self, state):
         """Set the current game state of the robot.
