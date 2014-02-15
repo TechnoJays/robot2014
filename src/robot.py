@@ -434,9 +434,15 @@ class MyRobot(wpilib.SimpleRobot):
             # Perform user controlled actions
             if self._user_interface:
                 # Get the values for the thumbsticks and dpads
+                driver_left_x = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickAxis.LEFTX)
                 driver_left_y = self._user_interface.get_axis_value(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickAxis.LEFTY)
+                driver_right_x = self._user_interface.get_axis_value(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickAxis.RIGHTX)
                 driver_right_y = self._user_interface.get_axis_value(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickAxis.RIGHTY)
@@ -446,9 +452,6 @@ class MyRobot(wpilib.SimpleRobot):
                 scoring_right_y = self._user_interface.get_axis_value(
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickAxis.RIGHTY)
-                scoring_dpad_y = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickAxis.DPADY)
 
                 # Check for alternate speed mode
                 if (self._user_interface.get_button_state(
@@ -458,18 +461,11 @@ class MyRobot(wpilib.SimpleRobot):
                     self._driver_alternate = True
                 else:
                     self._driver_alternate = False
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.RIGHTBUMPER)
-                    == 1):
-                    self._scoring_alternate = True
-                else:
-                    self._scoring_alternate = False
 
                 # Check if encoder soft limits should be ignored
                 if (self._user_interface.get_button_state(
                                 userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.LEFTBUMPER)
+                                userinterface.JoystickButtons.START)
                     == 1):
                     self._shooter.ignore_limits(True)
                 else:
@@ -481,15 +477,15 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Manually control the robot
                 # Drive train
-                if driver_left_y != 0.0 or driver_right_y != 0.0:
+                if driver_left_y != 0.0 or driver_right_x != 0.0:
                     #TODO: abort any relevent teleop auto routines
                     if self._drive_train:
-                        self._drive_train.tank_drive(driver_left_y,
-                                driver_right_y, False)
+                        self._drive_train.arcade_drive(driver_left_y,
+                                                       driver_right_x, False)
                 else:
                     #TODO: make sure we don't mess with any teleop auto routines
                     # if they're running
-                    self._drive_train.tank_drive(0.0, 0.0, False)
+                    self._drive_train.arcade_drive(0.0, 0.0, False)
 
                 # TODO Shooter
                 # TODO Feeder

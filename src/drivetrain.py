@@ -735,6 +735,34 @@ class DriveTrain(object):
 
         self._robot_drive.TankDrive(left, right, False)
 
+    def arcade_drive(self, left_stick, right_stick, alternate):
+        """Drives the robot using left and right thumbstick controls.
+
+        This is an alternate method used during manual/teleop driving mode,
+        where the left thumbstick controls the forward and backward movement
+        and the right thumbstick controls turning.
+
+        Args:
+            left_stick: the 'y' position of the left thumbstick
+            right_stick: the 'x' position of the right thumbstick
+            alternate: True if the robot should move at 'alternate' speed.
+        """
+        # Abort if the robot drive is not available
+        if not self._robot_drive:
+            return
+
+        # Determine the actual speed using the normal/alternate speed ratios
+        linear = 0.0
+        turn = 0.0
+        if alternate:
+            linear = self._alternate_linear_speed_ratio * left_stick
+            turn = self._alternate_linear_speed_ratio * right_stick
+        else:
+            linear = self._normal_linear_speed_ratio * left_stick
+            turn = self._normal_linear_speed_ratio * right_stick
+
+        self._robot_drive.ArcadeDrive(linear, turn, False)
+
     def set_heading(self, heading, speed):
         """Turns the robot left/right to face a specified heading.
 
