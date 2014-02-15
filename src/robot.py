@@ -456,7 +456,7 @@ class MyRobot(wpilib.SimpleRobot):
                 # Check for alternate speed mode
                 if (self._user_interface.get_button_state(
                                 userinterface.UserControllers.DRIVER,
-                                userinterface.JoystickButtons.RIGHTBUMPER)
+                                userinterface.JoystickButtons.LEFTBUMPER)
                     == 1):
                     self._driver_alternate = True
                 else:
@@ -488,14 +488,35 @@ class MyRobot(wpilib.SimpleRobot):
                     self._drive_train.arcade_drive(0.0, 0.0, False)
 
                 # TODO Shooter
+                if scoring_left_y != 0.0:
+                    if self._shooter:
+                        #TODO: manually control catapult
+                        #TODO: abort any relevent teleop auto routines
+                        pass
+
                 # TODO Feeder
+                if (self._user_interface.get_button_state(
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.RIGHTBUMPER) == 1 and
+                    self._user_interface.button_state_changed(
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.RIGHTBUMPER)):
+                    == 1):
+                    #TODO: toggle feeder arms up/down
+                    #TODO: abort any relevent teleop auto routines
+                    pass
+                if scoring_right_y != 0.0:
+                    if self._feeder:
+                        #TODO: manually control feeder motors
+                        #TODO: abort any relevent teleop auto routines
+                        pass
 
                 # Print debug info to driver station
                 if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
+                                userinterface.UserControllers.DRIVER,
                                 userinterface.JoystickButtons.BACK) == 1 and
                     self._user_interface.button_state_changed(
-                                userinterface.UserControllers.SCORING,
+                                userinterface.UserControllers.DRIVER,
                                 userinterface.JoystickButtons.BACK)):
                     self._user_interface.output_user_message("Diagnostics",
                                                              True)
