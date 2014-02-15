@@ -382,13 +382,13 @@ class DriveTrain(object):
 
         if self._log_enabled:
             if self.accelerometer_enabled:
-                self._log.WriteLine("Accelerometer enabled\n")
+                self._log.write_line("Accelerometer enabled\n")
             else:
-                self._log.WriteLine("Accelerometer disabled\n")
+                self._log.write_line("Accelerometer disabled\n")
             if self.gyro_enabled:
-                self._log.WriteLine("Gyro enabled\n")
+                self._log.write_line("Gyro enabled\n")
             else:
-                self._log.WriteLine("Gyro disabled\n")
+                self._log.write_line("Gyro disabled\n")
 
         return True
 
@@ -489,10 +489,10 @@ class DriveTrain(object):
         """Log sensor and status variables."""
         if self._log:
             if self.gyro_enabled:
-                self._log.WriteValue("Gyro angle", self._gyro_angle, True)
+                self._log.write_value("Gyro angle", self._gyro_angle, True)
             if self.accelerometer_enabled:
-                self._log.WriteValue("Acceleration", self._acceleration, True)
-                self._log.WriteValue("Distance traveled",
+                self._log.write_value("Acceleration", self._acceleration, True)
+                self._log.write_value("Distance traveled",
                         self._distance_traveled, True)
 
     def adjust_heading(self, adjustment, speed):

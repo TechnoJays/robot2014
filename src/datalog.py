@@ -92,7 +92,7 @@ class DataLog(object):
         else:
             print("Close File Error: No file opened.")
 
-    def write_line(self, line, timestamp):
+    def write_line(self, line, timestamp=False):
         """Writes a line of text
 
         Captures line of text followed by a Carriage Return ("\n")
@@ -105,7 +105,7 @@ class DataLog(object):
         else:
             self._fo.write("   %s/n" % self._line)
 
-    def write_value(self, parameter, value, timestamp):
+    def write_value(self, parameter, value, timestamp=False):
         """Writes the parameter and value to the open text file
 
         if timestamp is True add Timestamp before line of text
