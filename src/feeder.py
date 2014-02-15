@@ -153,7 +153,6 @@ class Feeder(object):
         solenoid_channel = -1
         left_arm_channel_channel = -1
         right_arm_channel_channel = -1
-        parameters_read = False
 
         # Initialize private parameters
         self._clockwise = 1.0
@@ -168,28 +167,24 @@ class Feeder(object):
 
         # Read the parameters file
         self._parameters = parameters.Parameters(self._parameters_file)
-        if self._parameters and self._parameters.file_opened:
-            parameters_read = self._parameters.read_values()
-            self._parameters.close()
-
-        if self._log_enabled:
-            if parameters_read:
-                self._log.write_line("Feeder parameters loaded successfully")
-            else:
-                self._log.write_line("Failed to read Feeder parameters")
+        section = __name__.lower()
 
         # Store parameters from the file to local variables
-        if parameters_read:
-            pressure_switch_channel = self._parameters.get_value(
-                    "PRESSURE_SWITCH_CHANNEL")
-            compressor_relay_channel = self._parameters.get_value(
-                    "COMPRESSOR_RELAY_CHANNEL")
-            solenoid_channel = self._parameters.get_value("SOLENOID_CHANNEL")
-            right_arm_channel = self._parameters.get_value("RIGHT_ARM_CHANNEL")
-            left_arm_channel = self._parameters.get_value("LEFT_ARM_CHANNEL")
-            self._clockwise = self._parameters.get_value("CLOCKWISE")
-            self._counter_clockwise = self._parameters.get_value(
-                    "COUNTER_CLOCKWISE")
+        if self._parameters:
+            pressure_switch_channel = self._parameters.get_value(section,
+                                                "PRESSURE_SWITCH_CHANNEL")
+            compressor_relay_channel = self._parameters.get_value(section,
+                                                "COMPRESSOR_RELAY_CHANNEL")
+            solenoid_channel = self._parameters.get_value(section,
+                                                "SOLENOID_CHANNEL")
+            right_arm_channel = self._parameters.get_value(section,
+                                                "RIGHT_ARM_CHANNEL")
+            left_arm_channel = self._parameters.get_value(section,
+                                                "LEFT_ARM_CHANNEL")
+            self._clockwise = self._parameters.get_value(section,
+                                                "CLOCKWISE")
+            self._counter_clockwise = self._parameters.get_value(section,
+                                                "COUNTER_CLOCKWISE")
 
         # Create the compressor object if the channel is greater than 0
         self.compressor_enabled = False
@@ -235,7 +230,7 @@ class Feeder(object):
             if self._log_enabled:
                 self._log.write_line("Feeder enabled")
 
-        return parameters_read
+        return True
 
     def set_robot_state(self, state):
         """Set the current game state of the robot.
