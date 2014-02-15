@@ -1,3 +1,6 @@
 [submodule "ext/text_utilities"]
 	path = ext/text_utilities
 	url = git@github.com:adein/text_utilities.git
+[submodule "ext/robotpy"]
+	path = ext/robotpy
+	url = git@github.com:robotpy/robotpy.git
