@@ -125,22 +125,13 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         # Define and initialize local variables
-        parameters_read = False
 
         # Close and delete old objects
         self._parameters = None
 
         # Read the parameters file
         self._parameters = parameters.Parameters(self._parameters_file)
-        if self._parameters and self._parameters.file_opened:
-            parameters_read = self._parameters.read_values()
-            self._parameters.close() #TODO remove?
-
-        if self._log_enabled:
-            if parameters_read:
-                self._log.write_line("Robot parameters loaded successfully")
-            else:
-                self._log.write_line("Failed to read Robot parameters")
+        section = __name__.lower()
 
         # Store parameters from the file to local variables
         if parameters_read:
@@ -148,7 +139,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         # TODO
 
-        return parameters_read
+        return True
 
     def RobotInit(self):
         """Performs robot-wide initialization.
