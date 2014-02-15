@@ -4,3 +4,6 @@
 [submodule "ext/robotpy"]
 	path = ext/robotpy
 	url = git@github.com:robotpy/robotpy.git
+[submodule "ext/pyfrc"]
+	path = ext/pyfrc
+	url = git@github.com:robotpy/pyfrc.git
