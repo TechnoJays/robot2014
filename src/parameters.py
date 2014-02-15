@@ -1,4 +1,8 @@
+"""This module provides a class to read from config files."""
+
+
 import configparser
+
 
 class Parameters(object):
     """ Reads in a parameters file.
@@ -20,7 +24,7 @@ class Parameters(object):
     _file = None
     _config = None
 
-    def __init__(self, parameters_file="parameters.par", mode="r"):
+    def __init__(self, parameters_file="parameters.par"):
         """ Open a file to read program parameters
 
         Instantiate the parameters reader with the passed file
@@ -33,9 +37,9 @@ class Parameters(object):
         self._file = None
         self._config = None
         self.file_opened = False
-        self._open(parameters_file, mode)
+        self._open(parameters_file)
 
-    def _open(self, path, mode):
+    def _open(self, path):
         """ Open a file with the mode "r".
 
          Open a file for reading parameters
@@ -65,13 +69,13 @@ class Parameters(object):
             self._file.close()
             self.file_opened = False
 
-    def read_values(self, section):
+    def read_values(self, section=None):
         """ Get the configuration dictionary
 
         Get the configuration dictionary for a section
 
         """
-        if not (self._config):
+        if not self._config:
             return None
 
         if section:

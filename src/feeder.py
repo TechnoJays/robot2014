@@ -13,6 +13,7 @@ import parameters
 
 
 class Direction(object):
+    """Enumeration for the directions of the feeder."""
     STOP = 0
     IN = 1
     OUT = 2
@@ -151,8 +152,8 @@ class Feeder(object):
         pressure_switch_channel = -1
         compressor_relay_channel = -1
         solenoid_channel = -1
-        left_arm_channel_channel = -1
-        right_arm_channel_channel = -1
+        left_arm_channel = -1
+        right_arm_channel = -1
 
         # Initialize private parameters
         self._clockwise = 1.0

@@ -134,7 +134,7 @@ class MyRobot(wpilib.SimpleRobot):
         section = __name__.lower()
 
         # Store parameters from the file to local variables
-        if parameters_read:
+        if self._parameters:
             pass
 
         # TODO
@@ -196,7 +196,7 @@ class MyRobot(wpilib.SimpleRobot):
             if self._drive_train:
                 self._drive_train.drive(0.0, 0.0, False)
             if self._feeder:
-                self._feeder.feed(feeder.Direction.STOP)
+                self._feeder.feed(feeder.Direction.STOP, 0.0)
             if self._shooter:
                 self._shooter.move(0.0)
             if (self._user_interface and self._autoscript and
@@ -217,7 +217,7 @@ class MyRobot(wpilib.SimpleRobot):
                                                 self._autoscript_filename,
                                                 True)
                 self._user_interface.store_button_states(
-                                        user_interface.UserControllers.DRIVER)
+                                        userinterface.UserControllers.DRIVER)
 
             self._check_restart()
             wpilib.Wait(0.01)
@@ -364,7 +364,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._drive_train:
                     self._drive_train.drive(0.0, 0.0, False)
                 if self._feeder:
-                    self._feeder.feed(feeder.Direction.STOP)
+                    self._feeder.feed(feeder.Direction.STOP, 0.0)
                 if self._shooter:
                     self._shooter.move(0.0)
 
@@ -430,15 +430,15 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Check for alternate speed mode
                 if (self._user_interface.get_button_state(
-                                user_interface.UserControllers.DRIVER,
-                                user_interface.JoystickButtons.RIGHTBUMPER)
+                                userinterface.UserControllers.DRIVER,
+                                userinterface.JoystickButtons.RIGHTBUMPER)
                     == 1):
                     self._driver_alternate = True
                 else:
                     self._driver_alternate = False
                 if (self._user_interface.get_button_state(
-                                user_interface.UserControllers.SCORING,
-                                user_interface.JoystickButtons.RIGHTBUMPER)
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.RIGHTBUMPER)
                     == 1):
                     self._scoring_alternate = True
                 else:
@@ -446,8 +446,8 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Check if encoder soft limits should be ignored
                 if (self._user_interface.get_button_state(
-                                user_interface.UserControllers.SCORING,
-                                user_interface.JoystickButtons.LEFTBUMPER)
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.LEFTBUMPER)
                     == 1):
                     self._shooter.ignore_limits(True)
                 else:
@@ -474,11 +474,11 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Print debug info to driver station
                 if (self._user_interface.get_button_state(
-                                user_interface.UserControllers.SCORING,
-                                user_interface.JoystickButtons.BACK) == 1 and
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.BACK) == 1 and
                     self._user_interface.button_state_changed(
-                                user_interface.UserControllers.SCORING,
-                                user_interface.JoystickButtons.BACK)):
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.BACK)):
                     self._user_interface.output_user_message("Diagnostics",
                                                              True)
                     if self._drive_train:
@@ -504,8 +504,8 @@ class MyRobot(wpilib.SimpleRobot):
         """Monitor user input for a restart request."""
         #TODO comment out when in competitions
         if (self._user_interface.get_button_state(
-                        user_interface.UserControllers.SCORING,
-                        user_interface.JoystickButtons.START) == 1):
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.START) == 1):
             raise RuntimeError("Restart")
 
 

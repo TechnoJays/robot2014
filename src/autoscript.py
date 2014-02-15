@@ -12,7 +12,7 @@ Packages required:
 import os
 import csv
 import glob
-from text_utilities import *
+from text_utilities import convert_to_number
 
 
 class AutoScriptCommand(object):
