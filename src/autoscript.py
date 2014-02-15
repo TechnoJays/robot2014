@@ -2,7 +2,6 @@
 
 Packages required:
     - os
-    - sys
     - csv
     - glob
     - text_utilities
@@ -13,10 +12,7 @@ Packages required:
 import os
 import csv
 import glob
-
-import sys,os
-sys.path.append(os.path.realpath('ext/text_utilities/src'))
-from text_utilities.text_utilities import *
+from text_utilities import convert_to_number
 
 
 class AutoScriptCommand(object):
@@ -104,7 +100,7 @@ class AutoScript(object):
                     if cmd:
                         command = AutoScriptCommand(cmd, params)
                         self._commands.append(command)
-        except (OSError, IOError) as excep:
+        except (OSError, IOError):
             self._commands = None
             return self._commands
 
