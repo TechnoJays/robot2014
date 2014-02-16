@@ -2,6 +2,7 @@
 
 
 import configparser
+from text_utilities import convert_to_number
 
 
 class Parameters(object):
@@ -31,7 +32,6 @@ class Parameters(object):
 
         Args:
             parameters_file: The path to the file to read parameters from
-            mode: The mode to open the file with
 
         """
         self._file = None
@@ -46,7 +46,6 @@ class Parameters(object):
 
          Args:
             path: Path to the file
-            mode: mode to open the file with
 
         """
 
@@ -68,11 +67,17 @@ class Parameters(object):
         if self._file:
             self._file.close()
             self.file_opened = False
+            self._config = None
 
     def read_values(self, section=None):
         """ Get the configuration dictionary
+        ==DEPRECATED==
 
         Get the configuration dictionary for a section
+
+        Return:
+            If the section is passed, return the dictionary it contains
+            else, return all sections of the configuration
 
         """
         if not self._config:
@@ -91,7 +96,10 @@ class Parameters(object):
 
         Args:
             section: The section of the config file to read the parameter from
-            parameter
+            parameter: The parameter to read from the file
+
+        Return:
+            the parameter value that is read from the file
 
         """
 
@@ -99,6 +107,13 @@ class Parameters(object):
             return None
 
         if section and parameter:
-            return self._config.get(section, parameter)
+            read_value = self._config.get(section, parameter.to_lower())
         else:
             return None
+
+        param_value = convert_to_number(read_value)
+
+        if param_value:
+            return param_value
+        else:
+            return read_value
