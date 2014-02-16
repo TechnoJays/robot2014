@@ -312,6 +312,28 @@ class UserInterface(object):
                 return 0
         return 0
 
+    def output_user_message(self, message, clear):
+        """Displays a message on the User Messages Window of the Driver Station.
+
+        Args:
+            message: The text to display.
+            clear: True if the screen should be cleared first.
+
+        """
+        if not self._driver_station_lcd:
+            return
+
+        self._display_line = (self._display_line + 1) % 6
+
+        # Clear the screen if specified
+        if clear or self._display_line == 0:
+            self._display_line = 0
+            self._driver_station_lcd.Clear()
+
+        # Display the message
+        self._driver_station_lcd.PrintLine(self._display_line, message)
+        self._driver_station_lcd.UpdateLCD()
+
     def store_button_states(self, controller):
         """Store the current button states for the specified controller.
 
