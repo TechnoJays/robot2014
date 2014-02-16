@@ -576,7 +576,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._feeder:
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_position(self._current_feeder_position)
-                self._prep_for_feed_step = 2:
+                self._prep_for_feed_step = 2
             elif self._prep_for_feed_step == 2:
                 if self._shooter:
                 # TODO check this method
@@ -588,7 +588,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._feeder:
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_position(self._current_feeder_position)
-                self._prep_for_low_pass_step = 2:
+                self._prep_for_low_pass_step = 2
             elif self._prep_for_low_pass_step == 2:
                 if self._shooter:
                 # TODO check this method
