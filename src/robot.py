@@ -13,6 +13,7 @@ import common
 import datalog
 import drivetrain
 import feeder
+import math
 import parameters
 import shooter
 import stopwatch
@@ -42,6 +43,9 @@ class MyRobot(wpilib.SimpleRobot):
     _timer = None
     _user_interface = None
 
+    # Private parameters
+    _max_hold_to_shoot_time = None
+
     # Private member variables
     _log_enabled = False
     _parameters_file = None
@@ -53,6 +57,9 @@ class MyRobot(wpilib.SimpleRobot):
     _autoscript_files = None
     _driver_alternate = False
     _scoring_alternate = False
+    _current_feeder_position = None
+    _hold_to_shoot_step = -1
+    _hold_to_shoot_power = -1
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -79,6 +86,9 @@ class MyRobot(wpilib.SimpleRobot):
         self._timer = None
         self._user_interface = None
 
+        # Initialize private parameters
+        self._max_hold_to_shoot_time = None
+
         # Initialize private member variables
         self._log_enabled = False
         self._parameters_file = None
@@ -90,6 +100,9 @@ class MyRobot(wpilib.SimpleRobot):
         self._autoscript_files = None
         self._driver_alternate = False
         self._scoring_alternate = False
+        self._current_feeder_position = None
+        self._hold_to_shoot_step = -1
+        self._hold_to_shoot_power = 0
 
         # Enable logging if specified
         if logging_enabled:
@@ -135,9 +148,8 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Store parameters from the file to local variables
         if self._parameters:
-            pass
-
-        # TODO
+            self._max_hold_to_shoot_time = self._parameters.get_value(section,
+                                                "MAX_HOLD_TO_SHOOT_TIME")
 
         return True
 
@@ -166,6 +178,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._drive_train.read_sensors()
         if self._feeder:
             self._feeder.set_robot_state(common.ProgramState.DISABLED)
+            self._current_feeder_position = common.Direction.UP
+            self._feeder.set_position(self._current_feeder_position)
         if self._shooter:
             self._shooter.set_robot_state(common.ProgramState.DISABLED)
             self._shooter.read_sensors()
@@ -345,6 +359,8 @@ class MyRobot(wpilib.SimpleRobot):
                             not self._feeder):
                             self._current_command_complete = True
                         else:
+                            self._current_feeder_position = \
+                                        self._current_command.parameters[0]
                             self._feeder.set_position(
                                         self._current_command.parameters[0])
                             self._current_command_complete = True
@@ -430,6 +446,11 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Perform teleop autonomous actions
             # TODO
+            if self._hold_to_shoot_step == 2:
+                if self._shooter:
+                    # TODO check this method
+                    if self._shooter.shoot(self._hold_to_shoot_power):
+                        self._hold_to_shoot_step = -1
 
             # Perform user controlled actions
             if self._user_interface:
@@ -473,7 +494,25 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Check if any teleop autonomous routines are requested
                 # TODO
-
+                # Hold the right trigger to shoot, longer duration = more power
+                if (self._user_interface.button_state_changed(
+                            userinterface.UserControllers.SCORING,
+                            userinterface.JoystickButtons.RIGHTTRIGGER)):
+                    if (self._user_interface.get_button_state(
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.RIGHTTRIGGER)
+                        == 1):
+                        self._timer.start()
+                        self._hold_to_shoot_step = 1
+                    else:
+                        self._timer.stop()
+                        duration = self._timer.elapsed_time_in_secs()
+                        self._hold_to_shoot_power = (((duration * 1.0) /
+                                                   self._max_hold_to_shoot_time)
+                                                    * 100.0)
+                        if self._hold_to_shoot_power > 100.0:
+                            self._hold_to_shoot_power = 100.0
+                        self._hold_to_shoot_step = 2
 
                 # Manually control the robot
                 # Drive train
@@ -487,14 +526,26 @@ class MyRobot(wpilib.SimpleRobot):
                     # if they're running
                     self._drive_train.arcade_drive(0.0, 0.0, False)
 
-                # TODO Shooter
+                # Shooter
+                # Manually control catapult
                 if scoring_left_y != 0.0:
                     if self._shooter:
-                        #TODO: manually control catapult
+                        direction = None
+                        if scoring_left_y > 0:
+                            direction = common.Direction.UP
+                        else:
+                            direction = common.Direction.DOWN
+                        # TODO check this method call
+                        self._shooter.move(direction, math.fabs(scoring_left_y))
                         #TODO: abort any relevent teleop auto routines
-                        pass
+                else:
+                    #TODO: make sure we don't mess with any teleop auto routines
+                    # if they're running
+                    # TODO check this method call
+                    self._shooter.move(None, 0.0)
 
-                # TODO Feeder
+                # Feeder
+                # Toggle feeder arms
                 if (self._user_interface.get_button_state(
                                 userinterface.UserControllers.SCORING,
                                 userinterface.JoystickButtons.RIGHTBUMPER) == 1 and
@@ -502,14 +553,34 @@ class MyRobot(wpilib.SimpleRobot):
                                 userinterface.UserControllers.SCORING,
                                 userinterface.JoystickButtons.RIGHTBUMPER)):
                     == 1):
-                    #TODO: toggle feeder arms up/down
+                    if self._current_feeder_position == common.Direction.UP:
+                        self._current_feeder_position = common.Direction.DOWN
+                    else:
+                        self._current_feeder_position = common.Direction.UP
+                    self._feeder.set_position(self._current_feeder_position)
                     #TODO: abort any relevent teleop auto routines
-                    pass
+                # Manually control feeder motors
                 if scoring_right_y != 0.0:
                     if self._feeder:
-                        #TODO: manually control feeder motors
+                        direction = feeder.Direction.STOP
+                        if scoring_right_y > 0:
+                            direction = feeder.Direction.IN
+                        else:
+                            direction = feeder.Direction.OUT
+                        self._feeder.feed(direction, math.fabs(scoring_right_y))
                         #TODO: abort any relevent teleop auto routines
-                        pass
+                else:
+                    #TODO: make sure we don't mess with any teleop auto routines
+                    # if they're running
+                    self._feeder.feed(feeder.Direction.STOP, 0.0)
+
+                # Kill switch for all semi-auto functionality
+                if (self._user_interface.get_button_state(
+                                userinterface.UserControllers.SCORING,
+                                userinterface.JoystickButtons.BACK)
+                    == 1):
+                    # TODO
+                    self._hold_to_shoot_step = -1
 
                 # Print debug info to driver station
                 if (self._user_interface.get_button_state(
