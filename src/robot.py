@@ -133,11 +133,11 @@ class MyRobot(wpilib.SimpleRobot):
         # Create robot objects
         self._autoscript = autoscript.AutoScript()
         self._drive_train = drivetrain.DriveTrain("drivetrain.par",
-                self._log_enabled)
+                                                  self._log_enabled)
         self._feeder = feeder.Feeder("feeder.par", self._log_enabled)
         self._shooter = shooter.Shooter("shooter.par", self._log_enabled)
         self._user_interface = userinterface.UserInterface("userinterface.par",
-                self._log_enabled)
+                                                           self._log_enabled)
 
     def load_parameters(self):
         """Load values from a parameter file and create and initialize objects.
@@ -149,8 +149,6 @@ class MyRobot(wpilib.SimpleRobot):
             True if the parameter file was processed successfully.
 
         """
-        # Define and initialize local variables
-
         # Close and delete old objects
         self._parameters = None
 
@@ -158,7 +156,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._parameters = parameters.Parameters(self._parameters_file)
         section = __name__.lower()
 
-        # Store parameters from the file to local variables
+        # Read parameters from the file
         if self._parameters:
             self._max_hold_to_shoot_time = self._parameters.get_value(section,
                                                 "MAX_HOLD_TO_SHOOT_TIME")
@@ -180,32 +178,17 @@ class MyRobot(wpilib.SimpleRobot):
         """
         self._initialize("robot.par", True)
 
-    def Disabled(self):
-        """Control the robot during Disabled mode.
+    def _disabled_init(self):
+        """Prepares the robot for Disabled mode."""
+        self._set_robot_state(common.ProgramState.DISABLED)
 
-        Monitors the user input for a restart request.  This is
-        useful during development to load new Python code and
-        avoid rebooting the robot.
-
-        Handle the changing of program settings from the driver
-        before the start of a match (e.g., autonomous program).
-
-        """
-        # Perform initialization before looping
-        if self._drive_train:
-            self._drive_train.set_robot_state(common.ProgramState.DISABLED)
-            self._drive_train.read_sensors()
+        # Default starting mode is to have the arms UP
         if self._feeder:
-            self._feeder.set_robot_state(common.ProgramState.DISABLED)
             self._current_feeder_position = common.Direction.UP
             self._feeder.set_position(self._current_feeder_position)
-        if self._shooter:
-            self._shooter.set_robot_state(common.ProgramState.DISABLED)
-            self._shooter.read_sensors()
-        #if self._targeting:
-        #    self._targeting.set_robot_state(common.ProgramState.DISABLED)
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.DISABLED)
+
+        # Read sensors
+        self._read_sensors()
 
         # Get the list of autoscript files/routines
         if self._autoscript:
@@ -219,9 +202,23 @@ class MyRobot(wpilib.SimpleRobot):
                                                 self._autoscript_filename,
                                                 True)
 
+        # This would be used for camera initialization
         if self._timer:
             self._timer.stop()
             self._timer.start()
+
+    def Disabled(self):
+        """Control the robot during Disabled mode.
+
+        Monitors the user input for a restart request.  This is
+        useful during development to load new Python code and
+        avoid rebooting the robot.
+
+        Handle the changing of program settings from the driver
+        before the start of a match (e.g., autonomous program).
+
+        """
+        self._disabled_init()
 
         # Repeat this loop as long as we're in Disabled
         while self.IsDisabled():
@@ -255,12 +252,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._check_restart()
             wpilib.Wait(0.01)
 
-    def Autonomous(self):
-        """Controls the robot during Autonomous mode.
-
-        Instantiate a Class using default values.
-
-        """
+    def _autonomous_init(self):
+        """Prepares the robot for Autonomous mode."""
         # Perform initialization before looping
         if self._timer:
             self._timer.stop()
@@ -269,28 +262,24 @@ class MyRobot(wpilib.SimpleRobot):
             self._current_command_complete = False
             self._current_command_in_progress = False
             self._current_command = self._autoscript.get_next_command()
-        if self._drive_train:
-            self._drive_train.set_robot_state(common.ProgramState.AUTONOMOUS)
-        if self._feeder:
-            self._feeder.set_robot_state(common.ProgramState.AUTONOMOUS)
-        if self._shooter:
-            self._shooter.set_robot_state(common.ProgramState.AUTONOMOUS)
-        #if self._targeting:
-        #    self._targeting.set_robot_state(common.ProgramState.AUTONOMOUS)
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.AUTONOMOUS)
 
-        # Repeat this loop as long as we're in Autonomous
+        self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
+
+    def Autonomous(self):
+        """Controls the robot during Autonomous mode.
+
+        Instantiate a Class using default values.
+
+        """
+        self._autonomous_init()
+        # Repeat this loop as long as we're in Autonomous
         while self.IsAutonomous() and self.IsEnabled():
             autoscript_finished = False
             self._current_command_complete = False
 
             # Read sensors
-            if self._drive_train:
-                self._drive_train.read_sensors()
-            if self._shooter:
-                self._shooter.read_sensors()
+            self._read_sensors()
 
             # Execute autoscript commands
             if self._autoscript and self._autoscript_filename:
@@ -438,259 +427,58 @@ class MyRobot(wpilib.SimpleRobot):
             self._check_restart()
             wpilib.Wait(0.01)
 
+    def _operator_control_init(self):
+        """Prepares the robot for Teleop mode."""
+        # Perform initialization before looping
+        if self._timer:
+            self._timer.stop()
+
+        self._set_robot_state(common.ProgramState.TELEOP)
+
+        dog = self.GetWatchdog()
+        dog.SetEnabled(True)
+        dog.SetExpiration(0.25)
+
     def OperatorControl(self):
         """Controls the robot during Teleop/OperatorControl mode.
 
         Instantiate a Class using default values.
 
         """
-        # Perform initialization before looping
-        if self._timer:
-            self._timer.stop()
-        if self._drive_train:
-            self._drive_train.set_robot_state(common.ProgramState.TELEOP)
-        if self._feeder:
-            self._feeder.set_robot_state(common.ProgramState.TELEOP)
-        if self._shooter:
-            self._shooter.set_robot_state(common.ProgramState.TELEOP)
-        #if self._targeting:
-        #    self._targeting.set_robot_state(common.ProgramState.TELEOP)
-        if self._user_interface:
-            self._user_interface.set_robot_state(common.ProgramState.TELEOP)
-
+        self._operator_control_init()
         dog = self.GetWatchdog()
-        dog.SetEnabled(True)
-        dog.SetExpiration(0.25)
-
         # Repeat this loop as long as we're in Teleop
         while self.IsOperatorControl() and self.IsEnabled():
             # Feed the watchdog timer
             dog.Feed()
 
             # Read sensors
-            if self._drive_train:
-                self._drive_train.read_sensors()
-            if self._shooter:
-                self._shooter.read_sensors()
+            self._read_sensors()
 
-            # Perform teleop autonomous actions
-            if self._hold_to_shoot_step == 2:
-                if self._shooter:
-                    # TODO check this method
-                    if self._shooter.shoot(self._hold_to_shoot_power):
-                        self._hold_to_shoot_step = -1
-            if self._prep_for_feed_step != -1:
-                if self._prep_for_feed_step == 1:
-                    if self._feeder:
-                        self._current_feeder_position = common.Direction.DOWN
-                        self._feeder.set_position(self._current_feeder_position)
-                    self._prep_for_feed_step = 2:
-                elif self._prep_for_feed_step == 2:
-                    if self._shooter:
-                    # TODO check this method
-                        if self._shooter.set_position(
-                                                self._catapult_feed_position):
-                            self._prep_for_feed_step = -1
-            if self._prep_for_low_pass_step != -1:
-                if self._prep_for_low_pass_step == 1:
-                    if self._feeder:
-                        self._current_feeder_position = common.Direction.DOWN
-                        self._feeder.set_position(self._current_feeder_position)
-                    self._prep_for_low_pass_step = 2:
-                elif self._prep_for_low_pass_step == 2:
-                    if self._shooter:
-                    # TODO check this method
-                        if self._shooter.set_position(
-                                            self._catapult_low_pass_position):
-                            self._prep_for_low_pass_step = -1
-            if self._truss_pass_step != -1:
-                if self._shooter:
-                    # TODO check this method
-                    if self._shooter.shoot(self._truss_pass_power):
-                        self._truss_pass_step = -1
+            # Perform tele-auto routines
+            self._perform_tele_auto()
 
             # Perform user controlled actions
             if self._user_interface:
-                # Get the values for the thumbsticks and dpads
-                driver_left_x = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.DRIVER,
-                        userinterface.JoystickAxis.LEFTX)
-                driver_left_y = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.DRIVER,
-                        userinterface.JoystickAxis.LEFTY)
-                driver_right_x = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.DRIVER,
-                        userinterface.JoystickAxis.RIGHTX)
-                driver_right_y = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.DRIVER,
-                        userinterface.JoystickAxis.RIGHTY)
-                scoring_left_y = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickAxis.LEFTY)
-                scoring_right_y = self._user_interface.get_axis_value(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickAxis.RIGHTY)
+                # Check for alternate speed mode request
+                self._check_alternate_speed_modes()
 
-                # Check for alternate speed mode
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.DRIVER,
-                                userinterface.JoystickButtons.LEFTBUMPER)
-                    == 1):
-                    self._driver_alternate = True
-                else:
-                    self._driver_alternate = False
+                # Check for ignore encoder limit request
+                self._check_ignore_limits()
 
-                # Check if encoder soft limits should be ignored
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.START)
-                    == 1):
-                    self._shooter.ignore_limits(True)
-                else:
-                    self._shooter.ignore_limits(False)
-
-                # Check if any teleop autonomous routines are requested
-                # Hold the right trigger to shoot, longer duration = more power
-                if (self._user_interface.button_state_changed(
-                            userinterface.UserControllers.SCORING,
-                            userinterface.JoystickButtons.RIGHTTRIGGER)):
-                    if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.RIGHTTRIGGER)
-                        == 1):
-                        self._timer.start()
-                        self._hold_to_shoot_step = 1
-                    else:
-                        self._timer.stop()
-                        duration = self._timer.elapsed_time_in_secs()
-                        self._hold_to_shoot_power = (((duration * 1.0) /
-                                                   self._max_hold_to_shoot_time)
-                                                    * 100.0)
-                        if self._hold_to_shoot_power > 100.0:
-                            self._hold_to_shoot_power = 100.0
-                        self._hold_to_shoot_step = 2
-                # Press Y to prepare to pick up a ball
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.Y) == 1 and
-                    self._user_interface.button_state_changed(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.Y)):
-                    self._prep_for_feed_step = 1
-                # Press X to prepare to pick up a ball for a low pass
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.X) == 1 and
-                    self._user_interface.button_state_changed(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.X)):
-                    self._prep_for_low_pass_step = 1
-                # Press left bumper to pass over the truss
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.LEFTBUMPER) == 1 and
-                    self._user_interface.button_state_changed(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.LEFTBUMPER)):
-                    self._truss_pass_step = 1
+                # Check for tele-auto requests
+                self._check_tele_auto_requests()
 
                 # Manually control the robot
-                # Drive train
-                if driver_left_y != 0.0 or driver_right_x != 0.0:
-                    #TODO: abort any relevent teleop auto routines
-                    if self._drive_train:
-                        self._drive_train.arcade_drive(driver_left_y,
-                                                       driver_right_x, False)
-                else:
-                    #TODO: make sure we don't mess with any teleop auto routines
-                    # if they're running
-                    self._drive_train.arcade_drive(0.0, 0.0, False)
+                self._control_drive_train()
+                self._control_shooter()
+                self._control_feeder()
 
-                # Shooter
-                # Manually control catapult
-                if scoring_left_y != 0.0:
-                    if self._shooter:
-                        direction = None
-                        if scoring_left_y > 0:
-                            direction = common.Direction.UP
-                        else:
-                            direction = common.Direction.DOWN
-                        # TODO check this method call
-                        self._shooter.move(direction, math.fabs(scoring_left_y))
-                        # Abort any relevent teleop auto routines
-                        self._hold_to_shoot_step = -1
-                        self._prep_for_feed_step = -1
-                        self._prep_for_low_pass_step = -1
-                        self._truss_pass_step = -1
-                else:
-                    # Make sure we don't mess with any teleop auto routines
-                    # if they're running
-                    if (self._hold_to_shoot_step == -1 and
-                        self._prep_for_feed_step == -1 and
-                        self._prep_for_low_pass_step == -1 and
-                        self._truss_pass_step == -1):
-                        # TODO check this method call
-                        self._shooter.move(None, 0.0)
+                # Check for tele-auto kill switch
+                self._check_tele_auto_kill()
 
-                # Feeder
-                # Toggle feeder arms
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.RIGHTBUMPER) == 1 and
-                    self._user_interface.button_state_changed(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.RIGHTBUMPER)):
-                    if self._current_feeder_position == common.Direction.UP:
-                        self._current_feeder_position = common.Direction.DOWN
-                    else:
-                        self._current_feeder_position = common.Direction.UP
-                    self._feeder.set_position(self._current_feeder_position)
-                    # Abort any relevent teleop auto routines
-                    self._prep_for_feed_step = -1
-                    self._prep_for_low_pass_step = -1
-                # Manually control feeder motors
-                if scoring_right_y != 0.0:
-                    if self._feeder:
-                        direction = feeder.Direction.STOP
-                        if scoring_right_y > 0:
-                            direction = feeder.Direction.IN
-                        else:
-                            direction = feeder.Direction.OUT
-                        self._feeder.feed(direction, math.fabs(scoring_right_y))
-                        # Abort any relevent teleop auto routines
-                else:
-                    # Make sure we don't mess with any teleop auto routines
-                    # if they're running
-                    self._feeder.feed(feeder.Direction.STOP, 0.0)
-
-                # Kill switch for all semi-auto functionality
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.SCORING,
-                                userinterface.JoystickButtons.BACK)
-                    == 1):
-                    self._hold_to_shoot_step = -1
-                    self._prep_for_feed_step = -1
-                    self._prep_for_low_pass_step = -1
-                    self._truss_pass_step = -1
-
-                # Print debug info to driver station
-                if (self._user_interface.get_button_state(
-                                userinterface.UserControllers.DRIVER,
-                                userinterface.JoystickButtons.BACK) == 1 and
-                    self._user_interface.button_state_changed(
-                                userinterface.UserControllers.DRIVER,
-                                userinterface.JoystickButtons.BACK)):
-                    self._user_interface.output_user_message("Diagnostics",
-                                                             True)
-                    if self._drive_train:
-                        self._drive_train.log_current_state()
-                        state = self._drive_train.get_current_state()
-                        self._user_interface.output_user_message(state, False)
-                    if self._shooter:
-                        self._shooter.log_current_state()
-                        state = self._shooter.get_current_state()
-                        self._user_interface.output_user_message(state, False)
-
+                # Check for debug to console request
+                self._check_debug_request()
 
                 # Update/store the UI button state
                 self._user_interface.store_button_states(
@@ -709,6 +497,234 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.JoystickButtons.START) == 1):
             raise RuntimeError("Restart")
 
+    def _read_sensors(self):
+        """Have the objects read their sensors."""
+        if self._drive_train:
+            self._drive_train.read_sensors()
+        if self._shooter:
+            self._shooter.read_sensors()
+
+    def _set_robot_state(self, state):
+        """Notify objects of the current mode."""
+        if self._drive_train:
+            self._drive_train.set_robot_state(state)
+        if self._feeder:
+            self._feeder.set_robot_state(state)
+        if self._shooter:
+            self._shooter.set_robot_state(state)
+        #if self._targeting:
+        #    self._targeting.set_robot_state(state)
+        if self._user_interface:
+            self._user_interface.set_robot_state(state)
+
+    def _check_tele_auto_requests(self):
+        """Check if any teleop autonomous routines are requested."""
+        # Hold the right trigger to shoot, longer duration = more power
+        if (self._user_interface.button_state_changed(
+                    userinterface.UserControllers.SCORING,
+                    userinterface.JoystickButtons.RIGHTTRIGGER)):
+            if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.RIGHTTRIGGER) == 1):
+                self._timer.start()
+                self._hold_to_shoot_step = 1
+            else:
+                self._timer.stop()
+                duration = self._timer.elapsed_time_in_secs()
+                self._hold_to_shoot_power = (((duration * 1.0) /
+                                           self._max_hold_to_shoot_time)
+                                            * 100.0)
+                if self._hold_to_shoot_power > 100.0:
+                    self._hold_to_shoot_power = 100.0
+                self._hold_to_shoot_step = 2
+        # Press Y to prepare to pick up a ball
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.Y) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.Y)):
+            self._prep_for_feed_step = 1
+        # Press X to prepare to pick up a ball for a low pass
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.X) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.X)):
+            self._prep_for_low_pass_step = 1
+        # Press left bumper to pass over the truss
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.LEFTBUMPER) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.LEFTBUMPER)):
+            self._truss_pass_step = 1
+
+    def _perform_tele_auto(self):
+        """Perform teleop autonomous actions."""
+        # Hold to shoot
+        if self._hold_to_shoot_step == 2:
+            if self._shooter:
+                # TODO check this method
+                if self._shooter.shoot(self._hold_to_shoot_power):
+                    self._hold_to_shoot_step = -1
+        # Prep for feed
+        if self._prep_for_feed_step != -1:
+            if self._prep_for_feed_step == 1:
+                if self._feeder:
+                    self._current_feeder_position = common.Direction.DOWN
+                    self._feeder.set_position(self._current_feeder_position)
+                self._prep_for_feed_step = 2:
+            elif self._prep_for_feed_step == 2:
+                if self._shooter:
+                # TODO check this method
+                    if self._shooter.set_position(self._catapult_feed_position):
+                        self._prep_for_feed_step = -1
+        # Prep for low pass
+        if self._prep_for_low_pass_step != -1:
+            if self._prep_for_low_pass_step == 1:
+                if self._feeder:
+                    self._current_feeder_position = common.Direction.DOWN
+                    self._feeder.set_position(self._current_feeder_position)
+                self._prep_for_low_pass_step = 2:
+            elif self._prep_for_low_pass_step == 2:
+                if self._shooter:
+                # TODO check this method
+                    if self._shooter.set_position(
+                                        self._catapult_low_pass_position):
+                        self._prep_for_low_pass_step = -1
+        # Truss pass
+        if self._truss_pass_step != -1:
+            if self._shooter:
+                # TODO check this method
+                if self._shooter.shoot(self._truss_pass_power):
+                    self._truss_pass_step = -1
+
+    def _check_debug_request(self):
+        """Print debug info to driver station."""
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.BACK) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.BACK)):
+            self._user_interface.output_user_message("Diagnostics",
+                                                     True)
+            if self._drive_train:
+                self._drive_train.log_current_state()
+                state = self._drive_train.get_current_state()
+                self._user_interface.output_user_message(state, False)
+            if self._shooter:
+                self._shooter.log_current_state()
+                state = self._shooter.get_current_state()
+                self._user_interface.output_user_message(state, False)
+
+    def _check_tele_auto_kill(self):
+        """Check kill switch for all tele-auto functionality."""
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.BACK) == 1):
+            self._hold_to_shoot_step = -1
+            self._prep_for_feed_step = -1
+            self._prep_for_low_pass_step = -1
+            self._truss_pass_step = -1
+
+    def _check_alternate_speed_modes(self):
+        """Check for alternate speed mode."""
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.LEFTBUMPER) == 1):
+            self._driver_alternate = True
+        else:
+            self._driver_alternate = False
+
+    def _check_ignore_limits(self):
+        """Check if encoder soft limits should be ignored."""
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.START) == 1):
+            self._shooter.ignore_limits(True)
+        else:
+            self._shooter.ignore_limits(False)
+
+    def _control_drive_train(self):
+        """Manually control the drive train."""
+        driver_left_y = self._user_interface.get_axis_value(
+                userinterface.UserControllers.DRIVER,
+                userinterface.JoystickAxis.LEFTY)
+        driver_right_x = self._user_interface.get_axis_value(
+                userinterface.UserControllers.DRIVER,
+                userinterface.JoystickAxis.RIGHTX)
+        if driver_left_y != 0.0 or driver_right_x != 0.0:
+            #TODO: abort any relevent teleop auto routines
+            if self._drive_train:
+                self._drive_train.arcade_drive(driver_left_y, driver_right_x,
+                                               False)
+        else:
+            #TODO: make sure we don't mess with any teleop auto routines
+            # if they're running
+            self._drive_train.arcade_drive(0.0, 0.0, False)
+
+    def _control_shooter(self):
+        """Manually control the catapult."""
+        scoring_left_y = self._user_interface.get_axis_value(
+                userinterface.UserControllers.SCORING,
+                userinterface.JoystickAxis.LEFTY)
+        if scoring_left_y != 0.0:
+            if self._shooter:
+                # TODO check this method call
+                self._shooter.move(scoring_left_y)
+                # Abort any relevent teleop auto routines
+                self._hold_to_shoot_step = -1
+                self._prep_for_feed_step = -1
+                self._prep_for_low_pass_step = -1
+                self._truss_pass_step = -1
+        else:
+            # Make sure we don't mess with any teleop auto routines
+            # if they're running
+            if (self._hold_to_shoot_step == -1 and
+                self._prep_for_feed_step == -1 and
+                self._prep_for_low_pass_step == -1 and
+                self._truss_pass_step == -1):
+                # TODO check this method call
+                self._shooter.move(0.0)
+
+    def _control_feeder(self):
+        """Manually control the feeder."""
+        scoring_right_y = self._user_interface.get_axis_value(
+                userinterface.UserControllers.SCORING,
+                userinterface.JoystickAxis.RIGHTY)
+        # Toggle feeder arms
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.RIGHTBUMPER) == 1
+            and self._user_interface.button_state_changed(
+                        userinterface.UserControllers.SCORING,
+                        userinterface.JoystickButtons.RIGHTBUMPER)):
+            if self._current_feeder_position == common.Direction.UP:
+                self._current_feeder_position = common.Direction.DOWN
+            else:
+                self._current_feeder_position = common.Direction.UP
+            self._feeder.set_position(self._current_feeder_position)
+            # Abort any relevent teleop auto routines
+            self._prep_for_feed_step = -1
+            self._prep_for_low_pass_step = -1
+        # Manually control feeder motors
+        if scoring_right_y != 0.0:
+            if self._feeder:
+                direction = feeder.Direction.STOP
+                if scoring_right_y > 0:
+                    direction = feeder.Direction.IN
+                else:
+                    direction = feeder.Direction.OUT
+                self._feeder.feed(direction, math.fabs(scoring_right_y))
+                # Abort any relevent teleop auto routines
+        else:
+            # Make sure we don't mess with any teleop auto routines
+            # if they're running
+            self._feeder.feed(feeder.Direction.STOP, 0.0)
 
 
 def run():
