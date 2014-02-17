@@ -63,6 +63,7 @@ class Shooter(object):
     _ignore_encoder_limits = None
     _left_shooter_controller_enabled = False
     _right_shooter_controller_enabled = False
+    _robot_state = None
 
     def __init__(self, params="shooter.par", logging_enabled=False):
         """Create and initialize shooter.
@@ -127,7 +128,7 @@ class Shooter(object):
         self._auto_medium_time_threshold = 0.5
         self._auto_far_time_threshold = 1.0
         self._auto_far_speed_ratio = 1.0
-        self._auto_medium_speed_ratio =1.0
+        self._auto_medium_speed_ratio = 1.0
         self._auto_near_speed_ratio = 1.0
         self._invert_left_shooter_motor = 1.0
         self._invert_right_shooter_motor = 1.0
@@ -188,7 +189,7 @@ class Shooter(object):
         self._auto_medium_time_threshold = 0.5
         self._auto_far_time_threshold = 1.0
         self._auto_far_speed_ratio = 1.0
-        self._auto_medium_speed_ratio =1.0
+        self._auto_medium_speed_ratio = 1.0
         self._auto_near_speed_ratio = 1.0
         self._invert_left_shooter_motor = 1.0
         self._invert_right_shooter_motor = 1.0
@@ -360,7 +361,8 @@ class Shooter(object):
         """Log sensor and status variables."""
         if self._log:
             if self.encoder_enabled:
-                self._log.write_value("Encoder count", self._encoder_count, True)
+                self._log.write_value("Encoder count", self._encoder_count,
+                                      True)
 
     def set_position(self, position, speed):
         """Sets the catapult to a specified position.
@@ -452,15 +454,15 @@ class Shooter(object):
         # Check the encoder position against the boundaries (if enabled)
         if self.encoder_enabled:
             # Check max boundary
-            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
-                direction == common.Direction.UP and
+            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0
+                and direction == common.Direction.UP and
                 self._encoder_count > self._encoder_max_limit):
                 self._left_shooter_controller.Set(0, 0)
                 self._right_shooter_controller.Set(0, 0)
                 return True
             # Check min boundary
-            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
-                direction == common.Direction.DOWN and
+            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0
+                and direction == common.Direction.DOWN and
                 self._encoder_count < self._encoder_min_limit):
                 self._left_shooter_controller.Set(0, 0)
                 self._right_shooter_controller.Set(0, 0)
@@ -510,15 +512,15 @@ class Shooter(object):
         # Check the encoder position against the boundaries (if enabled)
         if self.encoder_enabled:
             # Check max boundary
-            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
-                self._shooter_up_direction * directional_speed > 0 and
+            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0
+                and self._shooter_up_direction * directional_speed > 0 and
                 self._encoder_count > self._encoder_max_limit):
                 self._left_shooter_controller.Set(0, 0)
                 self._right_shooter_controller.Set(0, 0)
                 return True
             # Check min boundary
-            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
-                self._shooter_down_direction * directional_speed > 0 and
+            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0
+                and self._shooter_down_direction * directional_speed > 0 and
                 self._encoder_count < self._encoder_min_limit):
                 self._left_shooter_controller.Set(0, 0)
                 self._right_shooter_controller.Set(0, 0)
