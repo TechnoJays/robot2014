@@ -386,21 +386,27 @@ class Shooter(object):
         if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
             position > self._encoder_count and
             self._encoder_count > self._encoder_max_limit):
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             return True
         # Check min boundary
         if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
             position < self._encoder_count and
             self._encoder_count < self._encoder_min_limit):
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             return True
 
         # Check to see if we've reached the correct position
         if math.fabs(position - self._encoder_count) <= self._encoder_threshold:
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             return True
 
         # Continue moving
@@ -421,12 +427,14 @@ class Shooter(object):
             movement_direction = (direction  * speed *
                                   self._auto_near_speed_ratio)
 
-        self._left_shooter_controller.Set((movement_direction *
+        if self._left_shooter_controller_enabled:
+            self._left_shooter_controller.Set((movement_direction *
                                            self._invert_left_shooter_motor),
-                                          0)
-        self._right_shooter_controller.Set((movement_direction *
+                                           0)
+        if self._right_shooter_controller_enabled:
+            self._right_shooter_controller.Set((movement_direction *
                                            self._invert_right_shooter_motor),
-                                          0)
+                                           0)
         return False
 
     def shoot_time(self, time, direction, speed):
@@ -457,21 +465,27 @@ class Shooter(object):
             if (not self._ignore_encoder_limits and self._encoder_max_limit > 0
                 and direction == common.Direction.UP and
                 self._encoder_count > self._encoder_max_limit):
-                self._left_shooter_controller.Set(0, 0)
-                self._right_shooter_controller.Set(0, 0)
+                if self._left_shooter_controller_enabled:
+                    self._left_shooter_controller.Set(0, 0)
+                if self._right_shooter_controller_enabled:
+                    self._right_shooter_controller.Set(0, 0)
                 return True
             # Check min boundary
             if (not self._ignore_encoder_limits and self._encoder_min_limit > 0
                 and direction == common.Direction.DOWN and
                 self._encoder_count < self._encoder_min_limit):
-                self._left_shooter_controller.Set(0, 0)
-                self._right_shooter_controller.Set(0, 0)
+                if self._left_shooter_controller_enabled:
+                    self._left_shooter_controller.Set(0, 0)
+                if self._right_shooter_controller_enabled:
+                    self._right_shooter_controller.Set(0, 0)
                 return True
 
         # Check if we've reached the time duration
         if time_left < self._time_threshold or time_left < 0:
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             self._timer.stop()
             return True
         directional_speed = 0
@@ -490,12 +504,14 @@ class Shooter(object):
             directional_speed = (directional_speed * speed *
                     self._auto_near_speed_ratio)
 
-        self._left_shooter_controller.Set((directional_speed *
+        if self._left_shooter_controller_enabled:
+            self._left_shooter_controller.Set((directional_speed *
                                            self._invert_left_shooter_motor),
-                                          0)
-        self._right_shooter_controller.Set((directional_speed *
+                                           0)
+        if self._right_shooter_controller_enabled:
+            self._right_shooter_controller.Set((directional_speed *
                                            self._invert_right_shooter_motor),
-                                          0)
+                                           0)
         return False
 
     def move(self, directional_speed):
@@ -515,23 +531,29 @@ class Shooter(object):
             if (not self._ignore_encoder_limits and self._encoder_max_limit > 0
                 and self._shooter_up_direction * directional_speed > 0 and
                 self._encoder_count > self._encoder_max_limit):
-                self._left_shooter_controller.Set(0, 0)
-                self._right_shooter_controller.Set(0, 0)
+                if self._left_shooter_controller_enabled:
+                    self._left_shooter_controller.Set(0, 0)
+                if self._right_shooter_controller_enabled:
+                    self._right_shooter_controller.Set(0, 0)
                 return True
             # Check min boundary
             if (not self._ignore_encoder_limits and self._encoder_min_limit > 0
                 and self._shooter_down_direction * directional_speed > 0 and
                 self._encoder_count < self._encoder_min_limit):
-                self._left_shooter_controller.Set(0, 0)
-                self._right_shooter_controller.Set(0, 0)
+                if self._left_shooter_controller_enabled:
+                    self._left_shooter_controller.Set(0, 0)
+                if self._right_shooter_controller_enabled:
+                    self._right_shooter_controller.Set(0, 0)
                 return True
 
-        self._left_shooter_controller.Set((directional_speed *
+        if self._left_shooter_controller_enabled:
+            self._left_shooter_controller.Set((directional_speed *
                                            self._invert_left_shooter_motor),
-                                          0)
-        self._right_shooter_controller.Set((directional_speed *
+                                           0)
+        if self._right_shooter_controller_enabled:
+            self._right_shooter_controller.Set((directional_speed *
                                            self._invert_right_shooter_motor),
-                                          0)
+                                           0)
 
     def auto_fire(self, power_as_percent):
         """Fire a shot automatically using sensors.
@@ -554,23 +576,29 @@ class Shooter(object):
         # Check max boundary
         if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
             self._encoder_count > self._encoder_max_limit):
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             return True
 
         # Check to see if we've reached the correct position
         if (math.fabs(self._encoder_max_limit - self._encoder_count) <=
             self._encoder_threshold):
-            self._left_shooter_controller.Set(0, 0)
-            self._right_shooter_controller.Set(0, 0)
+            if self._left_shooter_controller_enabled:
+                self._left_shooter_controller.Set(0, 0)
+            if self._right_shooter_controller_enabled:
+                self._right_shooter_controller.Set(0, 0)
             return True
 
-        self._left_shooter_controller.Set((shooting_power_as_speed *
+        if self._left_shooter_controller_enabled:
+            self._left_shooter_controller.Set((shooting_power_as_speed *
                                            self._invert_left_shooter_motor),
-                                          0)
-        self._right_shooter_controller.Set((shooting_power_as_speed *
+                                           0)
+        if self._right_shooter_controller_enabled:
+            self._right_shooter_controller.Set((shooting_power_as_speed *
                                            self._invert_right_shooter_motor),
-                                          0)
+                                           0)
         return False
 
     def ignore_encoder_limits(self, state):
