@@ -66,6 +66,7 @@ class MyRobot(wpilib.SimpleRobot):
     _prep_for_feed_step = -1
     _prep_for_low_pass_step = -1
     _truss_pass_step = -1
+    _driver_controls_swap_ratio = 1.0
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -109,6 +110,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._autoscript_files = None
         self._driver_alternate = False
         self._scoring_alternate = False
+        self._driver_controls_swap_ratio = 1.0
         self._current_feeder_position = None
         self._hold_to_shoot_step = -1
         self._hold_to_shoot_power = 0
@@ -491,6 +493,9 @@ class MyRobot(wpilib.SimpleRobot):
                 # Check for ignore encoder limit request
                 self._check_ignore_limits()
 
+                # Check swap drivetrain direction request
+                self._check_swap_drivetrain_request()
+
                 # Check for tele-auto requests
                 self._check_tele_auto_requests()
 
@@ -672,6 +677,25 @@ class MyRobot(wpilib.SimpleRobot):
         else:
             self._shooter.ignore_encoder_limits(False)
 
+    def _check_swap_drivetrain_request(self):
+        """Check if the driver wants to swap forward and reverse."""
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.RIGHTTRIGGER) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.RIGHTTRIGGER)):
+            self._driver_controls_swap_ratio = (self._driver_controls_swap_ratio
+                                                * -1.0)
+            if self._driver_controls_swap_ratio > 0:
+                self._user_interface.output_user_message(("Driver controls "
+                                                          "normal"),
+                                                         True)
+            else:
+                self._user_interface.output_user_message(("Driver controls "
+                                                          "swapped"),
+                                                         True)
+
     def _control_drive_train(self):
         """Manually control the drive train."""
         driver_left_y = self._user_interface.get_axis_value(
@@ -683,6 +707,7 @@ class MyRobot(wpilib.SimpleRobot):
         if driver_left_y != 0.0 or driver_right_x != 0.0:
             # Abort any relevent teleop auto routines
             if self._drive_train:
+                driver_left_y = driver_left_y * self._driver_controls_swap_ratio
                 self._drive_train.arcade_drive(driver_left_y, driver_right_x,
                                                False)
         else:
