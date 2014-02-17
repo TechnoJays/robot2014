@@ -129,7 +129,7 @@ class Parameters(object):
 
         param_value = convert_to_number(read_value)
 
-        if param_value:
+        if param_value != None:
             return param_value
         else:
             return read_value

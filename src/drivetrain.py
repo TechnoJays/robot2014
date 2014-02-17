@@ -216,17 +216,14 @@ class DriveTrain(object):
 
         """
         # Define and initialize local variables
-        left_motor_slot = -1
         left_motor_channel = -1
         left_motor_inverted = 0
-        right_motor_slot = -1
         right_motor_channel = -1
         right_motor_inverted = 0
         accelerometer_slot = -1
         accelerometer_range = -1
         gyro_channel = -1
         gyro_sensitivity = 0.007
-        motor_safety_timeout = 2.0
 
         # Close and delete old objects
         self._parameters = None
@@ -243,20 +240,14 @@ class DriveTrain(object):
 
         # Store parameters from the file to local variables
         if self._parameters:
-            left_motor_slot = self._parameters.get_value(section,
-                                            "LEFT_MOTOR_SLOT")
             left_motor_channel = self._parameters.get_value(section,
                                             "LEFT_MOTOR_CHANNEL")
             left_motor_inverted = self._parameters.get_value(section,
                                             "LEFT_MOTOR_INVERTED")
-            right_motor_slot = self._parameters.get_value(section,
-                                            "RIGHT_MOTOR_SLOT")
             right_motor_channel = self._parameters.get_value(section,
                                             "RIGHT_MOTOR_CHANNEL")
             right_motor_inverted = self._parameters.get_value(section,
                                             "RIGHT_MOTOR_INVERTED")
-            motor_safety_timeout = self._parameters.get_value(section,
-                                            "MOTOR_SAFETY_TIMEOUT")
             accelerometer_slot = self._parameters.get_value(section,
                                             "ACCELEROMETER_SLOT")
             accelerometer_range = self._parameters.get_value(section,
@@ -357,19 +348,17 @@ class DriveTrain(object):
                 self.gyro_enabled = True
 
         # Create motor controllers
-        if left_motor_slot > 0 and left_motor_channel > 0:
-            self._left_controller = wpilib.Jaguar(left_motor_slot,
-                    left_motor_channel)
-        if right_motor_slot > 0 and right_motor_channel > 0:
-            self._right_controller = wpilib.Jaguar(right_motor_slot,
-                    right_motor_channel)
+        if left_motor_channel > 0:
+            self._left_controller = wpilib.Jaguar(left_motor_channel)
+        if right_motor_channel > 0:
+            self._right_controller = wpilib.Jaguar(right_motor_channel)
 
         # Create RobotDrive using motor controllers
         if self._left_controller and self._right_controller:
             self._robot_drive = wpilib.RobotDrive(self._left_controller,
                     self._right_controller)
-            self._robot_drive.SetExpiration(motor_safety_timeout)
             self._robot_drive.SetSafetyEnabled(True)
+            self.drivetrain_enabled = True
 
         # Invert motors if specified
         if left_motor_inverted and self._robot_drive:
