@@ -126,7 +126,7 @@ class UserInterface(object):
         # TODO: may not need parameters file
         self._parameters_file = None
 
-        self._driver_station_lcd = wpilib.DriverStationLCD_GetInstance()
+        self._driver_station_lcd = wpilib.DriverStationLCD.GetInstance()
 
         if logging_enabled:
             #Create a new data log object
