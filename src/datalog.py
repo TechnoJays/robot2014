@@ -25,8 +25,6 @@ class DataLog(object):
         _timestamp: If true, record time stamp before string (line,
                     parameter, value). If false, don't record time-
                     stamp.
-        _parameter: Name of parameter (corresponding to value)
-        _value: The value (corresponding to parameter)
 
     """
     # Public member variables
@@ -40,8 +38,6 @@ class DataLog(object):
     _mode = None
     _line = None
     _timestamp = None
-    _parameter = None
-    _value = None
 
     def __init__(self, file_name="datalog.txt", mode="w"):
         """Initialize data log"""
@@ -57,8 +53,6 @@ class DataLog(object):
         self._mode = mode
         self._line = None
         self._timestamp = False
-        self._parameter = None
-        self._value = None
 
         self._open(mode)
 
@@ -110,11 +104,11 @@ class DataLog(object):
 
         if timestamp is True add Timestamp before line of text
         """
-        self._parameter = str(parameter)
-        self._value = str(value)
+        parameter = str(parameter)
+        value = str(value)
         if timestamp:
             current_time = str(wpilib.time.GetFPGATimestamp() / 1000.0)
             self._fo.write("%s" % current_time)
         else:
-            self._fo.write("   %s = %s/n" % (self._parameter, self._value))
+            self._fo.write("   %s = %s/n" % (parameter, value))
 
