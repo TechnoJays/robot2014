@@ -40,21 +40,21 @@ class Shooter(object):
     _timer = None
 
     # Private parameters
-    _shooter_normal_speed_ratio = None
-    _shooter_min_power_speed = None
-    _shooter_power_adjustment_ratio = None
-    _auto_far_speed_ratio = None
-    _auto_medium_speed_ratio = None
-    _shooter_up_direction = None
-    _shooter_down_direction = None
-    _invert_multiplier = None
     _encoder_threshold = None
+    _auto_medium_encoder_threshold = None
     _auto_far_encoder_threshold = None
     _encoder_max_limit = None
     _encoder_min_limit = None
-    _time threshold = None
+    _time_threshold = None
     _auto_medium_time_threshold = None
     _auto_far_time_threshold = None
+    _auto_far_speed_ratio = None
+    _auto_medium_speed_ratio = None
+    _auto_near_speed_ratio = None
+    _invert_left_shooter_motor = None
+    _invert_right_shooter_motor = None
+    _shooter_up_direction = None
+    _shooter_down_direction = None
 
     # Private member variables
     _encoder_count = None
@@ -118,21 +118,21 @@ class Shooter(object):
         self._timer = None
 
         # Initialize private parameters
-        self._shooter_normal_speed_ratio = 1.0
-        self._auto_far_speed_ratio = 1.0
-        self._auto_medium_speed_ratio =1.0
-        self._auto_near_speed_ratio = 1.0
-        self._shooter_up_direction = 1.0
-        self._shooter_down_direction = -1.0
-        self._invert_multiplier = 1.0
         self._encoder_threshold = 10
         self._auto_far_encoder_threshold = 100
         self._auto_medium_encoder_threshold = 50
         self._encoder_max_limit = 10000
         self._encoder_min_limit = 0
-        self._time threshold = 0.1
+        self._time_threshold = 0.1
         self._auto_medium_time_threshold = 0.5
         self._auto_far_time_threshold = 1.0
+        self._auto_far_speed_ratio = 1.0
+        self._auto_medium_speed_ratio =1.0
+        self._auto_near_speed_ratio = 1.0
+        self._invert_left_shooter_motor = 1.0
+        self._invert_right_shooter_motor = 1.0
+        self._shooter_up_direction = 1.0
+        self._shooter_down_direction = -1.0
 
         # Initialize private member variables
         self._encoder_count = 0
@@ -177,25 +177,23 @@ class Shooter(object):
         encoder_b_channel = -1
         encoder_reverse = 0
         encoder_type = 2
-        motor_safety_timeout = 2.0
 
         # Initialize private parameters
-        self._auto_far_speed_ratio = 1.0
-        self._auto_medium_speed_ratio =1.0
-        self._auto_near_speed_ratio = 1.0
-        self._shooter_up_direction = 1.0
-        self._shooter_down_direction = -1.0
-        self._invert_multiplier = 1.0
         self._encoder_threshold = 10
         self._auto_far_encoder_threshold = 100
         self._auto_medium_encoder_threshold = 50
         self._encoder_max_limit = 10000
         self._encoder_min_limit = 0
-        self._time threshold = 0.1
+        self._time_threshold = 0.1
         self._auto_medium_time_threshold = 0.5
         self._auto_far_time_threshold = 1.0
+        self._auto_far_speed_ratio = 1.0
+        self._auto_medium_speed_ratio =1.0
+        self._auto_near_speed_ratio = 1.0
         self._invert_left_shooter_motor = 1.0
         self._invert_right_shooter_motor = 1.0
+        self._shooter_up_direction = 1.0
+        self._shooter_down_direction = -1.0
 
         # Close and delete old objects
         self._parameters = None
@@ -209,34 +207,66 @@ class Shooter(object):
 
         # Store parameters from the file to local variables
         if self._parameters:
-            #pressure_switch_channel = self._parameters.get_value(section,
-            #                                    "PRESSURE_SWITCH_CHANNEL")
-
-            #FIXME
-            encoder_a_slot= self._parameters.get_value(section, "ENCODER_A_SLOT")
-            encoder_a_channel = self._parameters.get_value(section, "ENCODER_A_CHANNEL")
-            encoder_b_channel = self._parameters.get_value(section, "ENCODER_B_CHANNEL")
-            encoder_b_slot = self._parameters.get_value(section, "ENCODER_B_SLOT")
-            encoder_reverse = self._parameters.get_value(section, "ENCODER_REVERSE")
-            encoder_type = self._parameters.get_value(section, "ENCODER_TYPE")
-            encoder_threshold = self._parameters.get_value(section, "ENCODER_THRESHOLD")
-            invert_controls = self._parameters.get_value(section, "INVERT_CONTROLS")
-            shooter_normal_speed_ratio = self._parameters.get_value(section, "SHOOTER_NORMAL_SPEED_RATIO")
-            auto_far_speed_ratio = self._parameters.get_value(section, "AUTO_FAR_SPEED_RATIO")
-            auto_medium_speed_ratio = self._parameters.get_value(section, "AUTO_MEDIUM_SPEED_RATIO")
-            self._auto_near_speed_ratio = self._parameters.get_value(section, "AUTO_NEAR_SPEED_RATIO")
-            self._time_threshold = self._parameters.get_value(section, "TIME_THRESHOLD")
-            auto_medium_encoder_threshold = self._parameters.get_value(section, "AUTO_MEDIUM_ENCODER_THRESHOLD")
-            auto_far_encoder_threshold = self._parameters.get_value(section, "AUTO_FAR_ENCODER_THRESHOLD")
-            self._auto_medium_time_threshold = self._parameters.get_value(section,"AUTO_MEDIUM_TIME_THRESHOLD")
-            self._auto_far_time_threshold = self._parameters.get_value(section, "AUTO_FAR_TIME_THRESHOLD")
-            encoder_max_limit = self._parameters.get_value(section, "ENCODER_MAX_LIMIT")
-            encoder_min_limit = self._parameters.get_value(section, "ENCODER_MIN_LIMIT")
+            encoder_a_slot = self._parameters.get_value(section,
+                                                "ENCODER_A_SLOT")
+            encoder_a_channel = self._parameters.get_value(section,
+                                                "ENCODER_A_CHANNEL")
+            encoder_b_slot = self._parameters.get_value(section,
+                                                "ENCODER_B_SLOT")
+            encoder_b_channel = self._parameters.get_value(section,
+                                                "ENCODER_B_CHANNEL")
+            encoder_reverse = self._parameters.get_value(section,
+                                                "ENCODER_REVERSE")
+            encoder_type = self._parameters.get_value(section,
+                                                "ENCODER_TYPE")
+            left_shooter_channel = self._parameters.get_value(section,
+                                                "LEFT_SHOOTER_CHANNEL")
+            right_shooter_channel = self._parameters.get_value(section,
+                                                "RIGHT_SHOOTER_CHANNEL")
+            self._encoder_threshold = self._parameters.get_value(section,
+                                                "ENCODER_THRESHOLD")
+            self._auto_medium_encoder_threshold = self._parameters.get_value(
+                                                section,
+                                                "AUTO_MEDIUM_ENCODER_THRESHOLD")
+            self._auto_far_encoder_threshold = self._parameters.get_value(
+                                                section,
+                                                "AUTO_FAR_ENCODER_THRESHOLD")
+            self._encoder_max_limit = self._parameters.get_value(section,
+                                                "ENCODER_MAX_LIMIT")
+            self._encoder_min_limit = self._parameters.get_value(section,
+                                                "ENCODER_MIN_LIMIT")
+            self._time_threshold = self._parameters.get_value(section,
+                                                "TIME_THRESHOLD")
+            self._auto_medium_time_threshold = self._parameters.get_value(
+                                                section,
+                                                "AUTO_MEDIUM_TIME_THRESHOLD")
+            self._auto_far_time_threshold = self._parameters.get_value(section,
+                                                "AUTO_FAR_TIME_THRESHOLD")
+            self._auto_far_speed_ratio = self._parameters.get_value(section,
+                                                "AUTO_FAR_SPEED_RATIO")
+            self._auto_medium_speed_ratio = self._parameters.get_value(section,
+                                                "AUTO_MEDIUM_SPEED_RATIO")
+            self._auto_near_speed_ratio = self._parameters.get_value(section,
+                                                "AUTO_NEAR_SPEED_RATIO")
+            self._invert_left_shooter_motor = self._parameters.get_value(
+                                                section,
+                                                "INVERT_LEFT_SHOOTER_MOTOR")
+            self._invert_right_shooter_motor = self._parameters.get_value(
+                                                section,
+                                                "INVERT_RIGHT_SHOOTER_MOTOR")
+            self._shooter_up_direction = self._parameters.get_value(section,
+                                                "SHOOTER_UP_DIRECTION")
+            self._shooter_down_direction = self._parameters.get_value(section,
+                                                "SHOOTER_DOWN_DIRECTION")
 
         # Create the encoder object if the channel is greater than 0
         self.encoder_enabled = False
-        if (encoder_a_slot > 0 and encoder_a_channel > 0 and encoder_b_slot > 0 and encoder_b_channel > 0):
-            self._encoder = wpilib.Encoder(encoder_a_channel, encoder_b_channel, encoder_reverse, encoder_type)
+        if (encoder_a_slot > 0 and encoder_a_channel > 0 and
+            encoder_b_slot > 0 and encoder_b_channel > 0):
+            self._encoder = wpilib.Encoder(encoder_a_channel,
+                                           encoder_b_channel,
+                                           encoder_reverse,
+                                           encoder_type)
             if self._encoder:
                 self.encoder_enabled = True
                 self._encoder.Start()
@@ -450,13 +480,13 @@ class Shooter(object):
 
         if time_left > self._auto_far_time_threshold:
             directional_speed = (directional_speed * speed *
-                    self._auto_far_linear_speed_ratio)
+                    self._auto_far_speed_ratio)
         elif time_left > self._auto_medium_time_threshold:
             directional_speed = (directional_speed * speed *
-                    self._auto_medium_linear_speed_ratio)
+                    self._auto_medium_speed_ratio)
         else:
             directional_speed = (directional_speed * speed *
-                    self._auto_near_linear_speed_ratio)
+                    self._auto_near_speed_ratio)
 
         self._left_shooter_controller.Set((directional_speed *
                                            self._invert_left_shooter_motor),
