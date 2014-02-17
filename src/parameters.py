@@ -48,15 +48,31 @@ class Parameters(object):
             path: Path to the file
 
         """
-
+        self.file_opened = False
         if path:
             self._config = configparser.SafeConfigParser()
-            self._config.read(path)
-            self.file_opened = True
-            return True
-        else:
-            self.file_opened = False
-            return False
+            try:
+                self._config.read(path)
+                self.file_opened = True
+            except configparser.NoSectionError:
+                pass
+            except configparser.DuplicateSectionError:
+                pass
+            except configparser.DuplicateOptionError:
+                pass
+            except configparser.NoOptionError:
+                pass
+            except configparser.InterpolationDepthError:
+                pass
+            except configparser.InterpolationMissingOptionError:
+                pass
+            except configparser.InterpolationSyntaxError:
+                pass
+            except configparser.MissingSectionHeaderError:
+                pass
+            except configparser.ParsingError:
+                pass
+        return self.file_opened
 
     def _close(self):
         """ Close the file
@@ -107,7 +123,7 @@ class Parameters(object):
             return None
 
         if section and parameter:
-            read_value = self._config.get(section, parameter.to_lower())
+            read_value = self._config.get(section, parameter.lower())
         else:
             return None
 
