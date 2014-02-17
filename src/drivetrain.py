@@ -86,7 +86,7 @@ class DriveTrain(object):
     _previous_turn_speed = 0
     _adjustment_in_progress = False
 
-    def __init__(self, params="drivetrain.par", logging_enabled=False):
+    def __init__(self, params="/py/par/drivetrain.par", logging_enabled=False):
         """Create and initialize a DriveTrain.
 
         Instantiate a DriveTrain and specify a parameters file and whether

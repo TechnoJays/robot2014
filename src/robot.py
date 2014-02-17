@@ -132,12 +132,14 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Create robot objects
         self._autoscript = autoscript.AutoScript()
-        self._drive_train = drivetrain.DriveTrain("drivetrain.par",
+        self._drive_train = drivetrain.DriveTrain("/py/par/drivetrain.par",
                                                   self._log_enabled)
-        self._feeder = feeder.Feeder("feeder.par", self._log_enabled)
-        self._shooter = shooter.Shooter("shooter.par", self._log_enabled)
-        self._user_interface = userinterface.UserInterface("userinterface.par",
-                                                           self._log_enabled)
+        self._feeder = feeder.Feeder("/py/par/feeder.par", self._log_enabled)
+        self._shooter = shooter.Shooter("/py/par/shooter.par",
+                                        self._log_enabled)
+        self._user_interface = userinterface.UserInterface(
+                                                    "/py/par/userinterface.par",
+                                                    self._log_enabled)
 
     def load_parameters(self):
         """Load values from a parameter file and create and initialize objects.
@@ -176,7 +178,7 @@ class MyRobot(wpilib.SimpleRobot):
         Called each time the robot enters the Disabled mode.
 
         """
-        self._initialize("robot.par", True)
+        self._initialize("/py/par/robot.par", True)
 
     def _disabled_init(self):
         """Prepares the robot for Disabled mode."""
@@ -192,7 +194,8 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Get the list of autoscript files/routines
         if self._autoscript:
-            self._autoscript_files = self._autoscript.get_available_scripts()
+            self._autoscript_files = self._autoscript.get_available_scripts(
+                                                                    "/py/as/")
             if self._autoscript_files and len(self._autoscript_files) > 0:
                 self._autoscript_file_counter = 0
                 self._autoscript_filename = self._autoscript_files[

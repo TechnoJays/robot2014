@@ -123,7 +123,10 @@ class Parameters(object):
             return None
 
         if section and parameter:
-            read_value = self._config.get(section, parameter.lower())
+            try:
+                read_value = self._config.get(section, parameter.lower())
+            except configparser.NoSectionError:
+                return None
         else:
             return None
 

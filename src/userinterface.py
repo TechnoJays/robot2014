@@ -68,7 +68,7 @@ class UserInterface(object):
     _display_line = 0
     _log_enabled = False
 
-    def __init__(self, params="userinterface.par", logging_enabled=False):
+    def __init__(self, params="/py/par/userinterface.par", logging_enabled=False):
         """Create and initialize a UserInterface.
 
         Args:
