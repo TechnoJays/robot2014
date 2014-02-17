@@ -386,16 +386,38 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
-
-                    #TODO shooter
-                    elif self._current_command.command == "shoot":
+                    elif self._current_command.command == "auto_fire":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 1 or
                             not self._shooter):
                             self._current_command_complete = True
                         else:
-                            if (self._shooter.shoot(
+                            if (self._shooter.auto_fire(
                                         self._current_command.parameters[0])):
+                                self._current_command_complete = True
+                    elif self._current_command.command == "setshooter":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 2 or
+                            not self._shooter):
+                            self._current_command_complete = True
+                        else:
+                            if (self._shooter.set_position(
+                                        self._current_command.parameters[0],
+                                        self._current_command.parameters[1])):
+                                self._current_command_complete = True
+                    elif self._current_command.command == "shoottime":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 3 or
+                            not self._shooter):
+                            self._current_command_complete = True
+                        else:
+                            if not self._current_command_in_progress:
+                                self._shooter.reset_and_start_timer()
+                                self._current_command_in_progress = True
+                            if (self._shooter.shoot_time(
+                                        self._current_command.parameters[0],
+                                        self._current_command.parameters[1],
+                                        self._current_command.parameters[2])):
                                 self._current_command_complete = True
 
                     #TODO targeting?
@@ -567,8 +589,7 @@ class MyRobot(wpilib.SimpleRobot):
         # Hold to shoot
         if self._hold_to_shoot_step == 2:
             if self._shooter:
-                # TODO check this method
-                if self._shooter.shoot(self._hold_to_shoot_power):
+                if self._shooter.auto_fire(self._hold_to_shoot_power):
                     self._hold_to_shoot_step = -1
         # Prep for feed
         if self._prep_for_feed_step != -1:
@@ -579,8 +600,8 @@ class MyRobot(wpilib.SimpleRobot):
                 self._prep_for_feed_step = 2
             elif self._prep_for_feed_step == 2:
                 if self._shooter:
-                # TODO check this method
-                    if self._shooter.set_position(self._catapult_feed_position):
+                    if self._shooter.set_position(self._catapult_feed_position,
+                                                  1.0):
                         self._prep_for_feed_step = -1
         # Prep for low pass
         if self._prep_for_low_pass_step != -1:
@@ -591,15 +612,14 @@ class MyRobot(wpilib.SimpleRobot):
                 self._prep_for_low_pass_step = 2
             elif self._prep_for_low_pass_step == 2:
                 if self._shooter:
-                # TODO check this method
                     if self._shooter.set_position(
-                                        self._catapult_low_pass_position):
+                                        self._catapult_low_pass_position,
+                                        1.0):
                         self._prep_for_low_pass_step = -1
         # Truss pass
         if self._truss_pass_step != -1:
             if self._shooter:
-                # TODO check this method
-                if self._shooter.shoot(self._truss_pass_power):
+                if self._shooter.auto_fire(self._truss_pass_power):
                     self._truss_pass_step = -1
 
     def _check_debug_request(self):
@@ -645,9 +665,9 @@ class MyRobot(wpilib.SimpleRobot):
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.START) == 1):
-            self._shooter.ignore_limits(True)
+            self._shooter.ignore_encoder_limits(True)
         else:
-            self._shooter.ignore_limits(False)
+            self._shooter.ignore_encoder_limits(False)
 
     def _control_drive_train(self):
         """Manually control the drive train."""
@@ -658,12 +678,12 @@ class MyRobot(wpilib.SimpleRobot):
                 userinterface.UserControllers.DRIVER,
                 userinterface.JoystickAxis.RIGHTX)
         if driver_left_y != 0.0 or driver_right_x != 0.0:
-            #TODO: abort any relevent teleop auto routines
+            # Abort any relevent teleop auto routines
             if self._drive_train:
                 self._drive_train.arcade_drive(driver_left_y, driver_right_x,
                                                False)
         else:
-            #TODO: make sure we don't mess with any teleop auto routines
+            # Make sure we don't mess with any teleop auto routines
             # if they're running
             self._drive_train.arcade_drive(0.0, 0.0, False)
 
@@ -674,7 +694,6 @@ class MyRobot(wpilib.SimpleRobot):
                 userinterface.JoystickAxis.LEFTY)
         if scoring_left_y != 0.0:
             if self._shooter:
-                # TODO check this method call
                 self._shooter.move(scoring_left_y)
                 # Abort any relevent teleop auto routines
                 self._hold_to_shoot_step = -1
@@ -688,7 +707,6 @@ class MyRobot(wpilib.SimpleRobot):
                 self._prep_for_feed_step == -1 and
                 self._prep_for_low_pass_step == -1 and
                 self._truss_pass_step == -1):
-                # TODO check this method call
                 self._shooter.move(0.0)
 
     def _control_feeder(self):
