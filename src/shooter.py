@@ -9,6 +9,7 @@ except ImportError:
     from pyfrc import wpilib
 import common
 import datalog
+import math
 import parameters
 import stopwatch
 
@@ -17,7 +18,7 @@ class Shooter(object):
     """Controls catapult shooting mechanisms.
 
     Provides a simple interface to shoot an exercise ball. Main functions
-    are: move, auto_fire and set_position.
+    are: move, shoot and set_position.
 
     Hardware: 2 Motor Controllers and 1 Encoder
 
@@ -193,8 +194,8 @@ class Shooter(object):
         self._time threshold = 0.1
         self._auto_medium_time_threshold = 0.5
         self._auto_far_time_threshold = 1.0
-        self._invert_left_shooter_motor = False
-        self._invert_right_shooter_motor = False
+        self._invert_left_shooter_motor = 1.0
+        self._invert_right_shooter_motor = 1.0
 
         # Close and delete old objects
         self._parameters = None
@@ -269,7 +270,6 @@ class Shooter(object):
 
         return True
 
-
     def set_robot_state(self, state):
         """Set the current game state of the robot.
 
@@ -332,40 +332,221 @@ class Shooter(object):
             if self.encoder_enabled:
                 self._log.write_value("Encoder count", self._encoder_count, True)
 
+    def set_position(self, position, speed):
+        """Sets the catapult to a specified position.
 
-#FIXME
+        Args:
+            position: The desired position in encoder counts.
+            speed: The motor speed ratio.
 
+        Returns:
+            True when the desired position is reached.
 
-    def shoot(self, power_as_percent):
-    """Power the shooting mechanism with the given power percentage.
-    The power is vonverted into a motor speed and applied to the motor,
-    using conversion values specified in the parameter file.
+        """
+        # Abort if we don't have the encoder or motors
+        if not self.encoder_enabled or not self.shooter_enabled:
+            return True
 
-    param: power_as_percentage-> the amount of power/speed  between 0 and
-                                 1.0 (or -1.0)
-    """
-        """Abort if shooter not available"""
-        if (not self.shooter_enabled):
+        movement_direction = 0.0
+
+        # Check the encoder position against the boundaries (if enabled)
+        # Check max boundary
+        if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
+            position > self._encoder_count and
+            self._encoder_count > self._encoder_max_limit):
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            return True
+        # Check min boundary
+        if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
+            position < self._encoder_count and
+            self._encoder_count < self._encoder_min_limit):
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            return True
+
+        # Check to see if we've reached the correct position
+        if math.fabs(position - self._encoder_count) <= self._encoder_threshold:
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            return True
+
+        # Continue moving
+        if (position - self._encoder_count) > 0:
+            direction = self._shooter_down_direction
+        else:
+            direction = self._shooter_up_direction
+
+        if (math.fabs(position - self._encoder_count) >
+            self._auto_far_encoder_threshold):
+            movement_direction = (direction * speed *
+                                  self._auto_far_speed_ratio)
+        elif (math.fabs(position - self._encoder_count) >
+            self._auto_medium_encoder_threshold):
+            movement_direction = (direction * speed *
+                                  self._auto_medium_speed_ratio)
+        else:
+            movement_direction = (direction  * speed *
+                                  self._auto_near_speed_ratio)
+
+        self._left_shooter_controller.Set((movement_direction *
+                                           self._invert_left_shooter_motor),
+                                          0)
+        self._right_shooter_controller.Set((movement_direction *
+                                           self._invert_right_shooter_motor),
+                                          0)
+        return False
+
+    def shoot_time(self, time, direction, speed):
+        """Moves the shooter for a certain time and speed.
+
+        Args:
+            time: the time to move the shooter.
+            direction: the common.Direction enum in which to move.
+            speed: the motor speed ratio.
+
+        Returns:
+            True when finished.
+
+        """
+        # Abort if we don't have the timer or motors
+        if not self._timer or not self.shooter_enabled:
+            return True
+
+        # Get the timer value since we started moving
+        elapsed_time = self._timer.elapsed_time_in_secs()
+
+        # Calculate time left to move
+        time_left = time - elapsed_time
+
+        # Check the encoder position against the boundaries (if enabled)
+        if self.encoder_enabled:
+            # Check max boundary
+            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
+                direction == common.Direction.UP and
+                self._encoder_count > self._encoder_max_limit):
+                self._left_shooter_controller.Set(0, 0)
+                self._right_shooter_controller.Set(0, 0)
+                return True
+            # Check min boundary
+            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
+                direction == common.Direction.DOWN and
+                self._encoder_count < self._encoder_min_limit):
+                self._left_shooter_controller.Set(0, 0)
+                self._right_shooter_controller.Set(0, 0)
+                return True
+
+        # Check if we've reached the time duration
+        if time_left < self._time_threshold or time_left < 0:
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            self._timer.stop()
+            return True
+        directional_speed = 0
+        if direction == common.Direction.DOWN:
+            directional_speed = self._shooter_down_direction
+        else:
+            directional_speed = self._shooter_up_direction
+
+        if time_left > self._auto_far_time_threshold:
+            directional_speed = (directional_speed * speed *
+                    self._auto_far_linear_speed_ratio)
+        elif time_left > self._auto_medium_time_threshold:
+            directional_speed = (directional_speed * speed *
+                    self._auto_medium_linear_speed_ratio)
+        else:
+            directional_speed = (directional_speed * speed *
+                    self._auto_near_linear_speed_ratio)
+
+        self._left_shooter_controller.Set((directional_speed *
+                                           self._invert_left_shooter_motor),
+                                          0)
+        self._right_shooter_controller.Set((directional_speed *
+                                           self._invert_right_shooter_motor),
+                                          0)
+        return False
+
+    def move(self, directional_speed):
+        """Moves the shooter at a specified speed and direction.
+
+        Args:
+            directional_speed: the speed and direction for moving.
+
+        """
+        # Abort if the robot drive is not available
+        if not self.shooter_enabled:
             return
 
-        shooting_power_as_speed = 0.0
+        # Check the encoder position against the boundaries (if enabled)
+        if self.encoder_enabled:
+            # Check max boundary
+            if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
+                self._shooter_up_direction * directional_speed > 0 and
+                self._encoder_count > self._encoder_max_limit):
+                self._left_shooter_controller.Set(0, 0)
+                self._right_shooter_controller.Set(0, 0)
+                return True
+            # Check min boundary
+            if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
+                self._shooter_down_direction * directional_speed > 0 and
+                self._encoder_count < self._encoder_min_limit):
+                self._left_shooter_controller.Set(0, 0)
+                self._right_shooter_controller.Set(0, 0)
+                return True
 
-        """Take the power percentage and conver to a speed between 0 and
-        1.0 (or -1.0)"""
-        if (power_as_percentage == 0):
-            shooting_power_as_speed = 0.0
-        else if power_as_percentage > 0:
-            shooting_power_as_speed = ((power_as_percentage * self._shooter_power_adjustment_ratio) + self._shooter_min_power_speed) * self._shooter_normal_speed_ratio
-        else:
-            shooting_power_as_speed = ((power_as_percentage * self._shooter_power_adjustment_ratio) - self._shooter_min_power_speed) * self._shooter_normal_speed_ratio
+        self._left_shooter_controller.Set((directional_speed *
+                                           self._invert_left_shooter_motor),
+                                          0)
+        self._right_shooter_controller.Set((directional_speed *
+                                           self._invert_right_shooter_motor),
+                                          0)
 
-        """Set the controller speeed"""
-        self._shooter_controller.Set(shooting_power_as_speed, 0)
+    def auto_fire(self, power_as_percent):
+        """Fire a shot automatically using sensors.
+
+        Args:
+            power_as_percent: the percentage of the maximum power for the shot.
+
+        Returns:
+            True when finished.
+
+        """
+        # Abort if we don't have the encoder or motors
+        if not self.encoder_enabled or not self.shooter_enabled:
+            return True
+
+        shooting_power_as_speed = ((power_as_percent / 100.0) *
+                                   self._shooter_up_direction)
+
+        # Check the encoder position against the boundaries (if enabled)
+        # Check max boundary
+        if (not self._ignore_encoder_limits and self._encoder_max_limit > 0 and
+            self._encoder_count > self._encoder_max_limit):
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            return True
+
+        # Check to see if we've reached the correct position
+        if (math.fabs(self._encoder_max_limit - self._encoder_count) <=
+            self._encoder_threshold):
+            self._left_shooter_controller.Set(0, 0)
+            self._right_shooter_controller.Set(0, 0)
+            return True
+
+        self._left_shooter_controller.Set((shooting_power_as_speed *
+                                           self._invert_left_shooter_motor),
+                                          0)
+        self._right_shooter_controller.Set((shooting_power_as_speed *
+                                           self._invert_right_shooter_motor),
+                                          0)
+        return False
 
     def ignore_encoder_limits(self, state):
-    """Sets whether the encoder limits should be ignored or not.
-    param: state-> true if the encoder limits should be ignored.
-    """
+        """Notify shooter to ignore encoder limits.
 
+        Args:
+            state: True if limits should be ignored.
+
+        """
         self._ignore_encoder_limits = state
 
