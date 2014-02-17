@@ -55,6 +55,10 @@ class Shooter(object):
     _invert_right_shooter_motor = None
     _shooter_up_direction = None
     _shooter_down_direction = None
+    _normal_up_speed_ratio = None
+    _normal_down_speed_ratio = None
+    _alternate_up_speed_ratio = None
+    _alternate_down_speed_ratio = None
 
     # Private member variables
     _encoder_count = None
@@ -134,6 +138,10 @@ class Shooter(object):
         self._invert_right_shooter_motor = 1.0
         self._shooter_up_direction = 1.0
         self._shooter_down_direction = -1.0
+        self._normal_up_speed_ratio = 1.0
+        self._normal_down_speed_ratio = 0.3
+        self._alternate_up_speed_ratio = 1.0
+        self._alternate_down_speed_ratio = 0.5
 
         # Initialize private member variables
         self._encoder_count = 0
@@ -195,6 +203,10 @@ class Shooter(object):
         self._invert_right_shooter_motor = 1.0
         self._shooter_up_direction = 1.0
         self._shooter_down_direction = -1.0
+        self._normal_up_speed_ratio = 1.0
+        self._normal_down_speed_ratio = 0.3
+        self._alternate_up_speed_ratio = 1.0
+        self._alternate_down_speed_ratio = 0.5
 
         # Close and delete old objects
         self._parameters = None
@@ -259,6 +271,15 @@ class Shooter(object):
                                                 "SHOOTER_UP_DIRECTION")
             self._shooter_down_direction = self._parameters.get_value(section,
                                                 "SHOOTER_DOWN_DIRECTION")
+            self._normal_up_speed_ratio = self._parameters.get_value(section,
+                                                "NORMAL_UP_SPEED_RATIO")
+            self._normal_down_speed_ratio = self._parameters.get_value(section,
+                                                "NORMAL_DOWN_SPEED_RATIO")
+            self._alternate_up_speed_ratio = self._parameters.get_value(section,
+                                                "ALTERNATE_UP_SPEED_RATIO")
+            self._alternate_down_speed_ratio = self._parameters.get_value(
+                                                section,
+                                                "ALTERNATE_DOWN_SPEED_RATIO")
 
         # Create the encoder object if the channel is greater than 0
         self.encoder_enabled = False
@@ -411,9 +432,11 @@ class Shooter(object):
 
         # Continue moving
         if (position - self._encoder_count) > 0:
-            direction = self._shooter_down_direction
+            direction = (self._shooter_down_direction *
+                         self._alternate_down_speed_ratio)
         else:
-            direction = self._shooter_up_direction
+            direction = (self._shooter_up_direction *
+                         self._alternate_up_speed_ratio)
 
         if (math.fabs(position - self._encoder_count) >
             self._auto_far_encoder_threshold):
@@ -490,9 +513,11 @@ class Shooter(object):
             return True
         directional_speed = 0
         if direction == common.Direction.DOWN:
-            directional_speed = self._shooter_down_direction
+            directional_speed = (self._shooter_down_direction *
+                                 self._alternate_down_speed_ratio)
         else:
-            directional_speed = self._shooter_up_direction
+            directional_speed = (self._shooter_up_direction *
+                                 self._alternate_up_speed_ratio)
 
         if time_left > self._auto_far_time_threshold:
             directional_speed = (directional_speed * speed *
@@ -546,6 +571,12 @@ class Shooter(object):
                     self._right_shooter_controller.Set(0, 0)
                 return True
 
+        if self._shooter_up_direction * directional_speed > 0:
+            directional_speed = directional_speed * self._normal_up_speed_ratio
+        else:
+            directional_speed = (directional_speed *
+                                 self._normal_down_speed_ratio)
+
         if self._left_shooter_controller_enabled:
             self._left_shooter_controller.Set((directional_speed *
                                            self._invert_left_shooter_motor),
@@ -570,7 +601,8 @@ class Shooter(object):
             return True
 
         shooting_power_as_speed = ((power_as_percent / 100.0) *
-                                   self._shooter_up_direction)
+                                   self._shooter_up_direction *
+                                   self._alternate_up_speed_ratio)
 
         # Check the encoder position against the boundaries (if enabled)
         # Check max boundary
