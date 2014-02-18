@@ -413,9 +413,8 @@ class Shooter(object):
                 self._right_shooter_controller.Set(0, 0)
             return True
         # Check min boundary
-        if (not self._ignore_encoder_limits and self._encoder_min_limit > 0 and
-            position < self._encoder_count and
-            self._encoder_count < self._encoder_min_limit):
+        if (not self._ignore_encoder_limits and position < self._encoder_count
+            and self._encoder_count < self._encoder_min_limit):
             if self._left_shooter_controller_enabled:
                 self._left_shooter_controller.Set(0, 0)
             if self._right_shooter_controller_enabled:
@@ -431,7 +430,7 @@ class Shooter(object):
             return True
 
         # Continue moving
-        if (position - self._encoder_count) > 0:
+        if (position - self._encoder_count) < 0:
             direction = (self._shooter_down_direction *
                          self._alternate_down_speed_ratio)
         else:
