@@ -48,6 +48,7 @@ class MyRobot(wpilib.SimpleRobot):
     _catapult_feed_position = None
     _catapult_low_pass_position = None
     _truss_pass_power = None
+    _truss_pass_position = None
 
     # Private member variables
     _log_enabled = False
@@ -98,6 +99,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._catapult_feed_position = None
         self._catapult_low_pass_position = None
         self._truss_pass_power = None
+        self._truss_pass_position = None
 
         # Initialize private member variables
         self._log_enabled = False
@@ -171,6 +173,8 @@ class MyRobot(wpilib.SimpleRobot):
                                                 "CATAPULT_LOW_PASS_POSITION")
             self._truss_pass_power = self._parameters.get_value(section,
                                                 "TRUSS_PASS_POWER")
+            self._truss_pass_position = self._parameters.get_value(section,
+                                                "TRUSS_PASS_POSITION")
 
         return True
 
@@ -211,6 +215,8 @@ class MyRobot(wpilib.SimpleRobot):
         if self._timer:
             self._timer.stop()
             self._timer.start()
+
+        self.GetWatchdog().SetEnabled(False)
 
     def Disabled(self):
         """Control the robot during Disabled mode.
@@ -464,7 +470,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         dog = self.GetWatchdog()
         dog.SetEnabled(True)
-        dog.SetExpiration(0.25)
+        dog.SetExpiration(1.0)
 
     def OperatorControl(self):
         """Controls the robot during Teleop/OperatorControl mode.
@@ -522,10 +528,10 @@ class MyRobot(wpilib.SimpleRobot):
     def _check_restart(self):
         """Monitor user input for a restart request."""
         #TODO comment out when in competitions
-        if (self._user_interface.get_button_state(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickButtons.START) == 1):
-            raise RuntimeError("Restart")
+        #if (self._user_interface.get_button_state(
+        #                userinterface.UserControllers.SCORING,
+        #                userinterface.JoystickButtons.START) == 1):
+        #    raise RuntimeError("Restart")
 
     def _read_sensors(self):
         """Have the objects read their sensors."""
@@ -627,7 +633,8 @@ class MyRobot(wpilib.SimpleRobot):
         # Truss pass
         if self._truss_pass_step != -1:
             if self._shooter:
-                if self._shooter.auto_fire(self._truss_pass_power):
+                #if self._shooter.auto_fire(self._truss_pass_power):
+                if self._shooter.set_position(self._truss_pass_position, 1.0):
                     self._truss_pass_step = -1
 
     def _check_debug_request(self):
