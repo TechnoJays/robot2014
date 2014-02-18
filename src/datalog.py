@@ -2,11 +2,6 @@
 
 
 # Imports
-# If wpilib not available use pyfrc
-try:
-    import wpilib
-except ImportError:
-    from pyfrc import wpilib
 import os
 import time
 
