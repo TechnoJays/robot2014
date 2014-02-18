@@ -291,9 +291,6 @@ class MyRobot(wpilib.SimpleRobot):
         # Move the feeder arms down so they're out of the way
         # Also perform the shooter setup to move the arm down
         self._shooter_setup_step = 1
-        if self._feeder:
-            self._current_feeder_position = common.Direction.DOWN
-            self._feeder.set_position(self._current_feeder_position)
         while (self.IsAutonomous() and self.IsEnabled() and
                not self._shooter_setup()):
             wpilib.Wait(0.01)
@@ -636,12 +633,25 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         if self._shooter:
+            #if self._shooter_setup_step == 1:
+            #    if self._feeder:
+            #        wpilib.Wait(0.01)
+            #    self._shooter_setup_step = 2
+            #    return False
+            #elif self._shooter_setup_step == 2:
+            #    if self._feeder:
+            #        self._current_feeder_position = common.Direction.DOWN
+            #        self._feeder.set_position(self._current_feeder_position)
+            #        wpilib.Wait(0.)
+            #    self._shooter_setup_step = 3
+            #    return False
             if self._shooter_setup_step == 1:
                 self._shooter.ignore_encoder_limits(True)
+                self._shooter.reset_and_start_timer()
                 self._shooter_setup_step = 2
                 return False
             elif self._shooter_setup_step == 2:
-                if self._shooter.shoot_time(1.0, common.Direction.DOWN, 1.0):
+                if self._shooter.shoot_time(2.0, common.Direction.DOWN, 0.65):
                     self._shooter_setup_step = 3
                 return False
             elif self._shooter_setup_step == 3:

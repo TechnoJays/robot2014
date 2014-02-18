@@ -83,7 +83,7 @@ class AutoScript(object):
         self._commands = []
 
         try:
-            with open(path_and_file, 'rb') as asfile:
+            with open(path_and_file, 'r') as asfile:
                 csvreader = csv.reader(asfile, delimiter=',')
                 for row in csvreader:
                     cmd = None
@@ -129,7 +129,7 @@ class AutoScript(object):
         cmd = None
         if self._command_iterator:
             try:
-                cmd = self._command_iterator.next()
+                cmd = next(self._command_iterator)
             except StopIteration:
                 cmd = None
         return cmd
