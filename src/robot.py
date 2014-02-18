@@ -633,17 +633,13 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         if self._shooter:
+            # This requires the air tank to be pre-charged before a match
             #if self._shooter_setup_step == 1:
-            #    if self._feeder:
-            #        wpilib.Wait(0.01)
-            #    self._shooter_setup_step = 2
-            #    return False
-            #elif self._shooter_setup_step == 2:
             #    if self._feeder:
             #        self._current_feeder_position = common.Direction.DOWN
             #        self._feeder.set_position(self._current_feeder_position)
-            #        wpilib.Wait(0.)
-            #    self._shooter_setup_step = 3
+            #        wpilib.Wait(0.2)
+            #    self._shooter_setup_step = 2
             #    return False
             if self._shooter_setup_step == 1:
                 self._shooter.ignore_encoder_limits(True)
