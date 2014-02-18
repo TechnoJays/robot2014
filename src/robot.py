@@ -70,6 +70,7 @@ class MyRobot(wpilib.SimpleRobot):
     _truss_pass_step = -1
     _driver_controls_swap_ratio = 1.0
     _hold_to_shoot_power_factor = 0.0
+    _shooter_setup_step = -1
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -123,6 +124,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._prep_for_low_pass_step = -1
         self._truss_pass_step = -1
         self._hold_to_shoot_power_factor = 0.0
+        self._shooter_setup_step = -1
 
         # Enable logging if specified
         if logging_enabled:
@@ -286,6 +288,16 @@ class MyRobot(wpilib.SimpleRobot):
         self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
 
+        # Move the feeder arms down so they're out of the way
+        # Also perform the shooter setup to move the arm down
+        self._shooter_setup_step = 1
+        if self._feeder:
+            self._current_feeder_position = common.Direction.DOWN
+            self._feeder.set_position(self._current_feeder_position)
+        while (self.IsAutonomous() and self.IsEnabled() and
+               not self._shooter_setup()):
+            wpilib.Wait(0.01)
+
     def Autonomous(self):
         """Controls the robot during Autonomous mode.
 
@@ -295,6 +307,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._autonomous_init()
         # Repeat this loop as long as we're in Autonomous
         while self.IsAutonomous() and self.IsEnabled():
+
             autoscript_finished = False
             self._current_command_complete = False
 
@@ -609,6 +622,33 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.LEFTBUMPER)):
             self._truss_pass_step = 1
+
+    def _shooter_setup(self):
+        """Get the shooter into a workable state.
+
+        This is because the shooter starts with the arm UP, so the encoder
+        value is not starting at 0.  To fix this, we disable encoder
+        boundaries and move the arm down for enough time to ensure the arm is
+        all the way down.  Then we reset the encoder to 0.
+
+        Returns:
+            True when setup is complete.
+
+        """
+        if self._shooter:
+            if self._shooter_setup_step == 1:
+                self._shooter.ignore_encoder_limits(True)
+                self._shooter_setup_step = 2
+                return False
+            elif self._shooter_setup_step == 2:
+                if self._shooter.shoot_time(1.0, common.Direction.DOWN, 1.0):
+                    self._shooter_setup_step = 3
+                return False
+            elif self._shooter_setup_step == 3:
+                self._shooter.reset_sensors()
+                self._shooter.ignore_encoder_limits(False)
+                self._shooter_setup_step = -1
+        return True
 
     def _perform_tele_auto(self):
         """Perform teleop autonomous actions."""

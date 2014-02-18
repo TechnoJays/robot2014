@@ -365,8 +365,13 @@ class Shooter(object):
 
     def read_sensors(self):
         """Read and store current sensor values."""
-
         if self.encoder_enabled:
+            self._encoder_count = self._encoder.Get()
+
+    def reset_sensors(self):
+        """Reset sensor values."""
+        if self.encoder_enabled:
+            self._encoder.Reset()
             self._encoder_count = self._encoder.Get()
 
     def get_current_state(self):

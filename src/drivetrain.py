@@ -357,7 +357,7 @@ class DriveTrain(object):
         if self._left_controller and self._right_controller:
             self._robot_drive = wpilib.RobotDrive(self._left_controller,
                     self._right_controller)
-            self._robot_drive.SetSafetyEnabled(True)
+            self._robot_drive.SetSafetyEnabled(False)
             self.drivetrain_enabled = True
 
         # Invert motors if specified
@@ -404,11 +404,11 @@ class DriveTrain(object):
             self._distance_traveled = 0.0
 
         if state == common.ProgramState.DISABLED:
-            self._robot_drive.SetSafetyEnabled(True)
+            pass
         if state == common.ProgramState.TELEOP:
-            self._robot_drive.SetSafetyEnabled(True)
+            pass
         if state == common.ProgramState.AUTONOMOUS:
-            self._robot_drive.SetSafetyEnabled(False)
+            pass
 
     def set_log_state(self, state):
         """Set the logging state for this object.
