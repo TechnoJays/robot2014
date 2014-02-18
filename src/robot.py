@@ -45,6 +45,7 @@ class MyRobot(wpilib.SimpleRobot):
 
     # Private parameters
     _max_hold_to_shoot_time = None
+    _min_hold_to_shoot_power = None
     _catapult_feed_position = None
     _catapult_low_pass_position = None
     _truss_pass_power = None
@@ -68,6 +69,7 @@ class MyRobot(wpilib.SimpleRobot):
     _prep_for_low_pass_step = -1
     _truss_pass_step = -1
     _driver_controls_swap_ratio = 1.0
+    _hold_to_shoot_power_factor = 0.0
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -96,6 +98,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Initialize private parameters
         self._max_hold_to_shoot_time = None
+        self._min_hold_to_shoot_power = None
         self._catapult_feed_position = None
         self._catapult_low_pass_position = None
         self._truss_pass_power = None
@@ -119,6 +122,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._prep_for_feed_step = -1
         self._prep_for_low_pass_step = -1
         self._truss_pass_step = -1
+        self._hold_to_shoot_power_factor = 0.0
 
         # Enable logging if specified
         if logging_enabled:
@@ -166,6 +170,8 @@ class MyRobot(wpilib.SimpleRobot):
         if self._parameters:
             self._max_hold_to_shoot_time = self._parameters.get_value(section,
                                                 "MAX_HOLD_TO_SHOOT_TIME")
+            self._min_hold_to_shoot_power = self._parameters.get_value(section,
+                                                "MIN_HOLD_TO_SHOOT_POWER")
             self._catapult_feed_position = self._parameters.get_value(section,
                                                 "CATAPULT_FEED_POSITION")
             self._catapult_low_pass_position = self._parameters.get_value(
@@ -176,6 +182,9 @@ class MyRobot(wpilib.SimpleRobot):
             self._truss_pass_position = self._parameters.get_value(section,
                                                 "TRUSS_PASS_POSITION")
 
+        self._hold_to_shoot_power_factor = ((100.0 -
+                                             self._min_hold_to_shoot_power) /
+                                            100.0)
         return True
 
     def RobotInit(self):
@@ -314,7 +323,7 @@ class MyRobot(wpilib.SimpleRobot):
                             if time_left < 0:
                                 self._timer.stop()
                                 self._current_command_complete = True
-                    elif self._current_command.command == "adjustheading":
+                    elif self._current_command.command == "adjust_heading":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 2 or
                             not self._drive_train):
@@ -324,7 +333,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "drivedistance":
+                    elif self._current_command.command == "drive_distance":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 2 or
                             not self._drive_train):
@@ -334,7 +343,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "drivetime":
+                    elif self._current_command.command == "drive_time":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 3 or
                             not self._drive_train):
@@ -348,7 +357,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "setheading":
+                    elif self._current_command.command == "set_heading":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 2 or
                             not self._drive_train):
@@ -358,7 +367,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "turntime":
+                    elif self._current_command.command == "turn_time":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 3 or
                             not self._drive_train):
@@ -372,7 +381,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[1],
                                         self._current_command.parameters[2])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "setfeederposition":
+                    elif self._current_command.command == "set_feeder_position":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 1 or
                             not self._feeder):
@@ -383,7 +392,7 @@ class MyRobot(wpilib.SimpleRobot):
                             self._feeder.set_position(
                                         self._current_command.parameters[0])
                             self._current_command_complete = True
-                    elif self._current_command.command == "feedtime":
+                    elif self._current_command.command == "feed_time":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 3 or
                             not self._feeder):
@@ -406,7 +415,7 @@ class MyRobot(wpilib.SimpleRobot):
                             if (self._shooter.auto_fire(
                                         self._current_command.parameters[0])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "setshooter":
+                    elif self._current_command.command == "set_shooter":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 2 or
                             not self._shooter):
@@ -416,7 +425,7 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
-                    elif self._current_command.command == "shoottime":
+                    elif self._current_command.command == "shoot_time":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 3 or
                             not self._shooter):
@@ -567,9 +576,12 @@ class MyRobot(wpilib.SimpleRobot):
             else:
                 self._timer.stop()
                 duration = self._timer.elapsed_time_in_secs()
-                self._hold_to_shoot_power = (((duration * 1.0) /
-                                           self._max_hold_to_shoot_time)
-                                            * 100.0)
+                requested_power = (((duration * 1.0) /
+                                    self._max_hold_to_shoot_time)
+                                   * 100.0)
+                self._hold_to_shoot_power = ((requested_power *
+                                              self._hold_to_shoot_power_factor)
+                                             + self._min_hold_to_shoot_power)
                 if self._hold_to_shoot_power > 100.0:
                     self._hold_to_shoot_power = 100.0
                 self._hold_to_shoot_step = 2
