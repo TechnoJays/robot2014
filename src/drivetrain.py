@@ -456,7 +456,7 @@ class DriveTrain(object):
             self._gyro_angle = self._gyro.GetAngle()
 
         if self.range_finder_enabled:
-            self._range = self._range_finder.get_range_in_inches()
+            self._range = self._range_finder.get_range_in_feet()
 
         if self.accelerometer_enabled:
             self._acceleration = self._accelerometer.GetAcceleration(
@@ -591,6 +591,54 @@ class DriveTrain(object):
 
         # Calculate distance left to drive
         distance_left = math.fabs(distance) - math.fabs(self._distance_traveled)
+
+        # Check if we've reached the distance
+        if distance_left < self._distance_threshold:
+            # Stop driving
+            self._robot_drive.ArcadeDrive(0.0, 0.0, False)
+            return True
+        else:
+            if distance_left > self._auto_far_distance_threshold:
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_far_linear_speed_ratio)
+            elif distance_left > self._auto_medium_distance_threshold:
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_medium_linear_speed_ratio)
+            else:
+                directional_multiplier = (directional_multiplier * speed *
+                        self._auto_near_linear_speed_ratio)
+            self._robot_drive.ArcadeDrive(directional_multiplier, 0.0, False)
+
+        return False
+
+    def drive_to_range(self, distance, speed):
+        """Drives forward/backward until range distance matches.
+
+        Using the range finder to determine distance to the nearest object,
+        drives the robot forward or backward until the range matches the
+        desired distance.
+
+        Args:
+            distance: the distance in feet.
+            speed: the motor speed ratio used while driving.
+
+        Returns:
+            True when the desired distance has been reached
+        """
+        # Abort if robot drive or range finder is not available
+        if (not self._robot_drive or not self.range_finder_enabled or
+            distance < 4.0):
+            return True
+
+        # Calculate distance left to drive
+        distance_left = self._range - distance
+
+        # Determine if robot should drive forward or backward
+        directional_multiplier = 0
+        if distance_left > 0:
+            directional_multiplier = self._forward_direction
+        else:
+            directional_multiplier = self._backward_direction
 
         # Check if we've reached the distance
         if distance_left < self._distance_threshold:

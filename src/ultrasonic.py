@@ -9,42 +9,25 @@ except ImportError:
 
 
 class RangeFinder(object):
+    """Get the distance to the nearest object."""
 
-    IN_TO_CM_CONVERSION = 2.54
-    use_units = None
-    min_voltage = None
-    voltage_range = None
-    min_distance = None
-    distance_range = None
+    volts_per_inch = None
     channel = None
 
     def __init__(self, chan):
         self.channel = wpilib.AnalogChannel(chan)
         self.channel.SetOversampleBits(4)
         self.channel.SetAverageBits(2)
-        self.use_units = True
-        self.min_voltage = 0.5
-        self.voltage_range = 5.0 - self.min_voltage
-        self.min_distance = 3.0
-        self.distance_range = 60.0 - self.min_distance
-        self.IN_TO_CM_CONVERSION = 2.54
+        self.volts_per_inch = 5 / 512.0
 
     def get_voltage(self):
-        #return self.channel.GetVoltage()
         return self.channel.GetAverageVoltage()
 
     def get_range_in_inches(self):
-        if not self.use_units:
-            return -1.0
         rng = self.get_voltage()
-        if rng < self.min_voltage:
-            return -2.0
-        rng = (rng - self.min_voltage) / self.voltage_range
-        rng = (rng * self.distance_range) + self.min_distance
-        return rng
+        rng = rng / self.volts_per_inch
 
-    def get_range_in_cm(self):
-        rng = self.get_range_in_inches()
-        rng = rng * self.IN_TO_CM_CONVERSION
+    def get_range_in_feet(self):
+        rng = self.get_range_in_inches() / 12.0
         return rng
 
