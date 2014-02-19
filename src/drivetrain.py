@@ -90,7 +90,7 @@ class DriveTrain(object):
     _adjustment_in_progress = False
     _range = None
 
-    def __init__(self, params="/py/par/drivetrain.par", logging_enabled=False):
+    def __init__(self, params="drivetrain.par", logging_enabled=False):
         """Create and initialize a DriveTrain.
 
         Instantiate a DriveTrain and specify a parameters file and whether
@@ -929,4 +929,12 @@ class DriveTrain(object):
             The current robot heading in degrees.
         """
         return self._gyro_angle
+
+    def get_range(self):
+        """Returns the current range to the nearest object.
+
+        Returns:
+            The current range in feet.
+        """
+        return self._range
 

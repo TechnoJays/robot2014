@@ -69,7 +69,7 @@ class Shooter(object):
     _right_shooter_controller_enabled = False
     _robot_state = None
 
-    def __init__(self, params="/py/par/shooter.par", logging_enabled=False):
+    def __init__(self, params="shooter.par", logging_enabled=False):
         """Create and initialize shooter.
 
         Initialize default values and read parameters from the parameter file.

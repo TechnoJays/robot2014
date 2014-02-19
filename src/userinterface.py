@@ -61,14 +61,13 @@ class UserInterface(object):
 
     _driver_station_lcd = None
     _data_log = None
-    # TODO: may not need parameters file
     _parameters_file = None
 
     _robot_state = None
     _display_line = 0
     _log_enabled = False
 
-    def __init__(self, params="/py/par/userinterface.par", logging_enabled=False):
+    def __init__(self, params="userinterface.par", logging_enabled=False):
         """Create and initialize a UserInterface.
 
         Args:
@@ -123,7 +122,6 @@ class UserInterface(object):
         self._display_line = 0
         self._log_enabled = False
         self._robot_state = common.ProgramState.DISABLED
-        # TODO: may not need parameters file
         self._parameters_file = None
 
         self._driver_station_lcd = wpilib.DriverStationLCD.GetInstance()
@@ -209,8 +207,6 @@ class UserInterface(object):
             self._controller_2 = wpilib.Joystick(controller_2_port,
                                                  controller_2_axis,
                                                  self._controller_2_buttons)
-
-            # TODO - Store the button states
 
         return self._parameters
 

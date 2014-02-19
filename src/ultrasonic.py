@@ -21,14 +21,17 @@ class RangeFinder(object):
         self.volts_per_inch = 5 / 512.0
 
     def get_voltage(self):
+        """Get the voltage from the analog channel."""
         return self.channel.GetAverageVoltage()
 
     def get_range_in_inches(self):
+        """Get the range to the nearest object in inches."""
         rng = self.get_voltage()
         rng = rng / self.volts_per_inch
         return rng
 
     def get_range_in_feet(self):
+        """Get the range to the nearest object in feet."""
         rng = self.get_range_in_inches() / 12.0
         return rng
 

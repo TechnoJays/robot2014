@@ -278,7 +278,6 @@ class MyRobot(wpilib.SimpleRobot):
                 self._user_interface.store_button_states(
                                         userinterface.UserControllers.DRIVER)
 
-            self._check_restart()
             wpilib.Wait(0.01)
 
     def _autonomous_init(self):
@@ -498,7 +497,6 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._shooter:
                     self._shooter.move(0.0)
 
-            self._check_restart()
             wpilib.Wait(0.01)
 
     def _operator_control_init(self):
@@ -529,7 +527,6 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Read sensors
             self._read_sensors()
-            self._print_range()
 
             # Perform tele-auto routines
             self._perform_tele_auto()
@@ -542,6 +539,8 @@ class MyRobot(wpilib.SimpleRobot):
                 # Check for ignore encoder limit request
                 self._check_ignore_limits()
 
+                # Print the range and check for other print timeouts
+                self._print_range()
                 self._check_ui_print_timeout()
 
                 # Check swap drivetrain direction request
@@ -567,23 +566,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._user_interface.store_button_states(
                         userinterface.UserControllers.SCORING)
 
-            self._check_restart()
             wpilib.Wait(0.01)
-
-    def _check_ui_print_timeout(self):
-        if self._disable_range_print:
-            elapsed_time = self._range_print_timer.elapsed_time_in_secs()
-            if elapsed_time > 2.0:
-                self._range_print_timer.stop()
-                self._disable_range_print = False
-
-    def _check_restart(self):
-        """Monitor user input for a restart request."""
-        #TODO comment out when in competitions
-        #if (self._user_interface.get_button_state(
-        #                userinterface.UserControllers.SCORING,
-        #                userinterface.JoystickButtons.START) == 1):
-        #    raise RuntimeError("Restart")
 
     def _read_sensors(self):
         """Have the objects read their sensors."""
@@ -694,6 +677,11 @@ class MyRobot(wpilib.SimpleRobot):
         """Perform teleop autonomous actions."""
         # Hold to shoot
         if self._hold_to_shoot_step == 2:
+            self._disable_range_print = True
+            self._range_print_timer.start()
+            self._user_interface.output_user_message('Power: %(pwr)3.0f' %
+                                             {'pwr':self._hold_to_shoot_power},
+                                             True)
             if self._shooter:
                 if self._shooter.shoot_time(0.1, common.Direction.DOWN, 1.0):
                     self._hold_to_shoot_step = 3
@@ -758,8 +746,18 @@ class MyRobot(wpilib.SimpleRobot):
         """Print the range to the nearest object."""
         if not self._disable_range_print:
             if self._drive_train:
-                state = self._drive_train.get_current_state()
-                self._user_interface.output_user_message(state, True)
+                rng = self._drive_train.get_range()
+                self._user_interface.output_user_message('Range: %(rng)4.1f' %
+                                                         {'rng':rng},
+                                                         True)
+
+    def _check_ui_print_timeout(self):
+        """Show any non-range message on the screen for 2 seconds."""
+        if self._disable_range_print:
+            elapsed_time = self._range_print_timer.elapsed_time_in_secs()
+            if elapsed_time > 2.0:
+                self._range_print_timer.stop()
+                self._disable_range_print = False
 
     def _check_tele_auto_kill(self):
         """Check kill switch for all tele-auto functionality."""

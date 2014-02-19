@@ -62,7 +62,7 @@ class Feeder(object):
     _parameters_file = None
     _robot_state = common.ProgramState.DISABLED
 
-    def __init__(self, params="/py/par/feeder.par", logging_enabled=False):
+    def __init__(self, params="feeder.par", logging_enabled=False):
         """Create and initialize a ball feeder.
 
         Instantiate a feeder and specify a parameters file and whether logging
