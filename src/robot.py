@@ -285,6 +285,9 @@ class MyRobot(wpilib.SimpleRobot):
             self._current_command_in_progress = False
             self._current_command = self._autoscript.get_next_command()
 
+        # Read sensors
+        self._read_sensors()
+
         self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
 

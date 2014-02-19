@@ -627,7 +627,7 @@ class DriveTrain(object):
         """
         # Abort if robot drive or range finder is not available
         if (not self._robot_drive or not self.range_finder_enabled or
-            distance < 4.0):
+            distance < 3.0):
             return True
 
         # Calculate distance left to drive
