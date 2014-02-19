@@ -641,15 +641,15 @@ class DriveTrain(object):
             directional_multiplier = self._backward_direction
 
         # Check if we've reached the distance
-        if distance_left < self._distance_threshold:
+        if math.fabs(distance_left) < self._distance_threshold:
             # Stop driving
             self._robot_drive.ArcadeDrive(0.0, 0.0, False)
             return True
         else:
-            if distance_left > self._auto_far_distance_threshold:
+            if math.fabs(distance_left) > self._auto_far_distance_threshold:
                 directional_multiplier = (directional_multiplier * speed *
                         self._auto_far_linear_speed_ratio)
-            elif distance_left > self._auto_medium_distance_threshold:
+            elif math.fabs(distance_left) > self._auto_medium_distance_threshold:
                 directional_multiplier = (directional_multiplier * speed *
                         self._auto_medium_linear_speed_ratio)
             else:
