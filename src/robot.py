@@ -661,6 +661,10 @@ class MyRobot(wpilib.SimpleRobot):
         # Hold to shoot
         if self._hold_to_shoot_step == 2:
             if self._shooter:
+                if self._shooter.shoot_time(0.1, common.Direction.DOWN, 1.0):
+                    self._hold_to_shoot_step = 3
+        elif self._hold_to_shoot_step == 3:
+            if self._shooter:
                 if self._shooter.auto_fire(self._hold_to_shoot_power):
                     self._hold_to_shoot_step = -1
         # Prep for feed
