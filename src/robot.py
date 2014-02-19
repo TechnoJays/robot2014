@@ -41,6 +41,7 @@ class MyRobot(wpilib.SimpleRobot):
     _shooter = None
     #_targeting = None
     _timer = None
+    _range_print_timer = None
     _user_interface = None
 
     # Private parameters
@@ -71,6 +72,7 @@ class MyRobot(wpilib.SimpleRobot):
     _driver_controls_swap_ratio = 1.0
     _hold_to_shoot_power_factor = 0.0
     _shooter_setup_step = -1
+    _disable_range_print = False
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -95,6 +97,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._shooter = None
         #self._targeting = None
         self._timer = None
+        self._range_print_timer = None
         self._user_interface = None
 
         # Initialize private parameters
@@ -125,6 +128,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._truss_pass_step = -1
         self._hold_to_shoot_power_factor = 0.0
         self._shooter_setup_step = -1
+        self._disable_range_print = False
 
         # Enable logging if specified
         if logging_enabled:
@@ -135,6 +139,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._log_enabled = True
 
         self._timer = stopwatch.Stopwatch()
+        self._range_print_timer = stopwatch.Stopwatch()
 
         # Read parameters file
         self._parameters_file = params
@@ -218,6 +223,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._autoscript_filename = self._autoscript_files[
                                                 self._autoscript_file_counter]
                 if self._user_interface:
+                    self._disable_range_print = True
                     self._user_interface.output_user_message(
                                                 self._autoscript_filename,
                                                 True)
@@ -265,6 +271,7 @@ class MyRobot(wpilib.SimpleRobot):
                         self._autoscript_file_counter = 0
                     self._autoscript_filename = self._autoscript_files[
                                                   self._autoscript_file_counter]
+                    self._disable_range_print = True
                     self._user_interface.output_user_message(
                                                 self._autoscript_filename,
                                                 True)
@@ -287,6 +294,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Read sensors
         self._read_sensors()
+        self._disable_range_print = False
 
         self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
@@ -313,6 +321,7 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Read sensors
             self._read_sensors()
+            self._print_range()
 
             # Execute autoscript commands
             if self._autoscript and self._autoscript_filename:
@@ -498,6 +507,7 @@ class MyRobot(wpilib.SimpleRobot):
         if self._timer:
             self._timer.stop()
 
+        self._disable_range_print = False
         self._set_robot_state(common.ProgramState.TELEOP)
 
         dog = self.GetWatchdog()
@@ -519,6 +529,7 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Read sensors
             self._read_sensors()
+            self._print_range()
 
             # Perform tele-auto routines
             self._perform_tele_auto()
@@ -530,6 +541,8 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Check for ignore encoder limit request
                 self._check_ignore_limits()
+
+                self._check_ui_print_timeout()
 
                 # Check swap drivetrain direction request
                 self._check_swap_drivetrain_request()
@@ -556,6 +569,13 @@ class MyRobot(wpilib.SimpleRobot):
 
             self._check_restart()
             wpilib.Wait(0.01)
+
+    def _check_ui_print_timeout(self):
+        if self._disable_range_print:
+            elapsed_time = self._range_print_timer.elapsed_time_in_secs()
+            if elapsed_time > 2.0:
+                self._range_print_timer.stop()
+                self._disable_range_print = False
 
     def _check_restart(self):
         """Monitor user input for a restart request."""
@@ -721,6 +741,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._user_interface.button_state_changed(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickButtons.BACK)):
+            self._disable_range_print = True
+            self._range_print_timer.start()
             self._user_interface.output_user_message("Diagnostics",
                                                      True)
             if self._drive_train:
@@ -731,6 +753,13 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter.log_current_state()
                 state = self._shooter.get_current_state()
                 self._user_interface.output_user_message(state, False)
+
+    def _print_range(self):
+        """Print the range to the nearest object."""
+        if not self._disable_range_print:
+            if self._drive_train:
+                state = self._drive_train.get_current_state()
+                self._user_interface.output_user_message(state, True)
 
     def _check_tele_auto_kill(self):
         """Check kill switch for all tele-auto functionality."""
@@ -770,12 +799,14 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.JoystickButtons.RIGHTTRIGGER)):
             self._driver_controls_swap_ratio = (self._driver_controls_swap_ratio
                                                 * -1.0)
+            self._disable_range_print = True
+            self._range_print_timer.start()
             if self._driver_controls_swap_ratio > 0:
-                self._user_interface.output_user_message(("Driver controls "
+                self._user_interface.output_user_message(("Controls "
                                                           "normal"),
                                                          True)
             else:
-                self._user_interface.output_user_message(("Driver controls "
+                self._user_interface.output_user_message(("Controls "
                                                           "swapped"),
                                                          True)
 
