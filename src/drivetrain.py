@@ -12,6 +12,7 @@ import common
 import datalog
 import parameters
 import stopwatch
+import ultrasonic
 
 
 class DriveTrain(object):
@@ -32,6 +33,7 @@ class DriveTrain(object):
     drivetrain_enabled = False
     accelerometer_enabled = False
     gyro_enabled = False
+    range_finder_enabled = False
 
     # Private member objects
     _log = None
@@ -42,6 +44,7 @@ class DriveTrain(object):
     _accelerometer = None
     _gyro = None
     _acceleration_timer = None
+    _range_finder = None
     _movement_timer = None
 
     # Private parameters
@@ -85,6 +88,7 @@ class DriveTrain(object):
     _previous_linear_speed = 0
     _previous_turn_speed = 0
     _adjustment_in_progress = False
+    _range = None
 
     def __init__(self, params="/py/par/drivetrain.par", logging_enabled=False):
         """Create and initialize a DriveTrain.
@@ -118,6 +122,7 @@ class DriveTrain(object):
         self._gyro = None
         self._movement_timer = None
         self._acceleration_timer = None
+        self._range_finder = None
 
     def _initialize(self, params, logging_enabled):
         """Initialize and configure a DriveTrain object.
@@ -135,6 +140,7 @@ class DriveTrain(object):
         self.drivetrain_enabled = False
         self.gyro_enabled = False
         self.accelerometer_enabled = False
+        self.range_finder_enabled = False
 
         # Initialize private member objects
         self._log = None
@@ -146,6 +152,7 @@ class DriveTrain(object):
         self._gyro = None
         self._acceleration_timer = None
         self._movement_timer = None
+        self._range_finder = None
 
         # Initialize private parameters
         self._normal_linear_speed_ratio = 1.0
@@ -188,6 +195,7 @@ class DriveTrain(object):
         self._previous_linear_speed = 0
         self._previous_turn_speed = 0
         self._adjustment_in_progress = False
+        self._range = 0.0
 
         # Enable logging if specified
         if logging_enabled:
@@ -224,6 +232,7 @@ class DriveTrain(object):
         accelerometer_range = -1
         gyro_channel = -1
         gyro_sensitivity = 0.007
+        range_finder_channel = -1
 
         # Close and delete old objects
         self._parameters = None
@@ -233,6 +242,7 @@ class DriveTrain(object):
         self._accelerometer = None
         self._gyro = None
         self._acceleration_timer = None
+        self._range_finder = None
 
         # Read the parameters file
         self._parameters = parameters.Parameters(self._parameters_file)
@@ -258,6 +268,8 @@ class DriveTrain(object):
                                             "GYRO_CHANNEL")
             gyro_sensitivity = self._parameters.get_value(section,
                                             "GYRO_SENSITIVITY")
+            range_finder_channel = self._parameters.get_value(section,
+                                            "RANGE_FINDER_CHANNEL")
             self._forward_direction = self._parameters.get_value(section,
                                             "FORWARD_DIRECTION")
             self._backward_direction = self._parameters.get_value(section,
@@ -346,6 +358,13 @@ class DriveTrain(object):
             if self._gyro:
                 self._gyro.SetSensitivity(gyro_sensitivity)
                 self.gyro_enabled = True
+
+        # Check if range finder is present/enabled
+        self.range_finder_enabled = False
+        if range_finder_channel > 0:
+            self._range_finder = ultrasonic.RangeFinder(range_finder_channel)
+            if self._range_finder:
+                self.range_finder_enabled = True
 
         # Create motor controllers
         if left_motor_channel > 0:
@@ -436,6 +455,9 @@ class DriveTrain(object):
         if self.gyro_enabled:
             self._gyro_angle = self._gyro.GetAngle()
 
+        if self.range_finder_enabled:
+            self._range = self._range_finder.get_range_in_inches()
+
         if self.accelerometer_enabled:
             self._acceleration = self._accelerometer.GetAcceleration(
                     self._accelerometer_axis)
@@ -469,9 +491,11 @@ class DriveTrain(object):
             A string with the gyro angle, acceleration value, and distance
                 traveled.
         """
-        return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % {'gyro':self._gyro_angle,
-                'acc':self._acceleration,
-                        'dis':self._distance_traveled}
+        #return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % {'gyro':self._gyro_angle,
+        #        'acc':self._acceleration,
+        #                'dis':self._distance_traveled}
+        return '%(gyro)3.0f %(rng)4.1f' % {'gyro':self._gyro_angle,
+                'rng':self._range}
 
     def log_current_state(self):
         """Log sensor and status variables."""
@@ -482,6 +506,8 @@ class DriveTrain(object):
                 self._log.write_value("Acceleration", self._acceleration, True)
                 self._log.write_value("Distance traveled",
                         self._distance_traveled, True)
+            if self.range_finder_enabled:
+                self._log.write_value("Range", self._range, True)
 
     def adjust_heading(self, adjustment, speed):
         """Turns left/right to adjust robot heading.
