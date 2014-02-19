@@ -26,6 +26,7 @@ class RangeFinder(object):
     def get_range_in_inches(self):
         rng = self.get_voltage()
         rng = rng / self.volts_per_inch
+        return rng
 
     def get_range_in_feet(self):
         rng = self.get_range_in_inches() / 12.0

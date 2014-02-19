@@ -594,6 +594,7 @@ class MyRobot(wpilib.SimpleRobot):
                                              + self._min_hold_to_shoot_power)
                 if self._hold_to_shoot_power > 100.0:
                     self._hold_to_shoot_power = 100.0
+                self._shooter.reset_and_start_timer()
                 self._hold_to_shoot_step = 2
         # Press Y to prepare to pick up a ball
         if (self._user_interface.get_button_state(
