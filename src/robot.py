@@ -353,6 +353,16 @@ class MyRobot(wpilib.SimpleRobot):
                                         self._current_command.parameters[0],
                                         self._current_command.parameters[1])):
                                 self._current_command_complete = True
+                    elif self._current_command.command == "drive_range":
+                        if (not self._current_command.parameters or
+                            len(self._current_command.parameters) != 2 or
+                            not self._drive_train):
+                            self._current_command_complete = True
+                        else:
+                            if (self._drive_train.drive_to_range(
+                                        self._current_command.parameters[0],
+                                        self._current_command.parameters[1])):
+                                self._current_command_complete = True
                     elif self._current_command.command == "drive_time":
                         if (not self._current_command.parameters or
                             len(self._current_command.parameters) != 3 or
