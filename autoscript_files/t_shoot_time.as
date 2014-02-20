@@ -1,4 +1,4 @@
-shoot_time,0.5,5,0.4
-wait,1.0
-shoot_time,0.5,6,0.4
+shoot_time,0.2,5,0.3
+wait_time,1.0
+shoot_time,0.2,6,0.4
 end
