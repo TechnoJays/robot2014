@@ -18,7 +18,7 @@ class Shooter(object):
     """Controls catapult shooting mechanisms.
 
     Provides a simple interface to shoot an exercise ball. Main functions
-    are: move, shoot and set_position.
+    are: move_shooter, shoot and set_shooter_position.
 
     Hardware: 2 Motor Controllers and 1 Encoder
 
@@ -390,7 +390,7 @@ class Shooter(object):
                 self._log.write_value("Encoder count", self._encoder_count,
                                       True)
 
-    def set_position(self, position, speed):
+    def set_shooter_position(self, position, speed):
         """Sets the catapult to a specified position.
 
         Args:
@@ -543,7 +543,7 @@ class Shooter(object):
                                            0)
         return False
 
-    def move(self, directional_speed):
+    def move_shooter(self, directional_speed):
         """Moves the shooter at a specified speed and direction.
 
         Args:

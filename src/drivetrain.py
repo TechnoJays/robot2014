@@ -649,7 +649,8 @@ class DriveTrain(object):
             if math.fabs(distance_left) > self._auto_far_distance_threshold:
                 directional_multiplier = (directional_multiplier * speed *
                         self._auto_far_linear_speed_ratio)
-            elif math.fabs(distance_left) > self._auto_medium_distance_threshold:
+            elif (math.fabs(distance_left) >
+                  self._auto_medium_distance_threshold):
                 directional_multiplier = (directional_multiplier * speed *
                         self._auto_medium_linear_speed_ratio)
             else:
@@ -810,6 +811,7 @@ class DriveTrain(object):
             right_stick: the 'x' position of the right thumbstick
             alternate: True if the robot should move at 'alternate' speed.
         """
+        #TODO: Duplicate of drive()?
         # Abort if the robot drive is not available
         if not self._robot_drive:
             return
@@ -826,7 +828,7 @@ class DriveTrain(object):
 
         self._robot_drive.ArcadeDrive(linear, turn, False)
 
-    def set_heading(self, heading, speed):
+    def turn_to_heading(self, heading, speed):
         """Turns the robot left/right to face a specified heading.
 
         Using the gyro to keep track of the current heading, turns the robot

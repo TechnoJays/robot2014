@@ -55,9 +55,6 @@ class MyRobot(wpilib.SimpleRobot):
     # Private member variables
     _log_enabled = False
     _parameters_file = None
-    _current_command_complete = False
-    _current_command_in_progress = False
-    _current_command = None
     _autoscript_file_counter = 0
     _autoscript_filename = None
     _autoscript_files = None
@@ -73,6 +70,11 @@ class MyRobot(wpilib.SimpleRobot):
     _hold_to_shoot_power_factor = 0.0
     _shooter_setup_step = -1
     _disable_range_print = False
+    _robot_names = None
+    _drive_train_names = None
+    _feeder_names = None
+    _shooter_names = None
+    _user_interface_names = None
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -111,9 +113,6 @@ class MyRobot(wpilib.SimpleRobot):
         # Initialize private member variables
         self._log_enabled = False
         self._parameters_file = None
-        self._current_command_complete = False
-        self._current_command_in_progress = False
-        self._current_command = None
         self._autoscript_file_counter = 0
         self._autoscript_filename = None
         self._autoscript_files = None
@@ -155,6 +154,13 @@ class MyRobot(wpilib.SimpleRobot):
         self._user_interface = userinterface.UserInterface(
                                                     "/py/par/userinterface.par",
                                                     self._log_enabled)
+
+        # Store the attributes/names in each object
+        self._robot_names = dir(self)
+        self._drive_train_names = dir(self._drive_train)
+        self._feeder_names = dir(self._feeder)
+        self._shooter_names = dir(self._shooter)
+        self._user_interface_names = dir(self._user_interface)
 
     def load_parameters(self):
         """Load values from a parameter file and create and initialize objects.
@@ -209,7 +215,7 @@ class MyRobot(wpilib.SimpleRobot):
         # Default starting mode is to have the arms UP
         if self._feeder:
             self._current_feeder_position = common.Direction.UP
-            self._feeder.set_position(self._current_feeder_position)
+            self._feeder.set_feeder_position(self._current_feeder_position)
 
         # Read sensors
         self._read_sensors()
@@ -256,7 +262,7 @@ class MyRobot(wpilib.SimpleRobot):
             if self._feeder:
                 self._feeder.feed(feeder.Direction.STOP, 0.0)
             if self._shooter:
-                self._shooter.move(0.0)
+                self._shooter.move_shooter(0.0)
             if (self._user_interface and self._autoscript and
                 self._autoscript_files and len(self._autoscript_files) > 0):
                 if (self._user_interface.get_button_state(
@@ -287,9 +293,6 @@ class MyRobot(wpilib.SimpleRobot):
             self._timer.stop()
         if self._autoscript and self._autoscript_filename:
             self._autoscript.parse(self._autoscript_filename)
-            self._current_command_complete = False
-            self._current_command_in_progress = False
-            self._current_command = self._autoscript.get_next_command()
 
         # Read sensors
         self._read_sensors()
@@ -298,8 +301,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
 
-        # Move the feeder arms down so they're out of the way
-        # Also perform the shooter setup to move the arm down
+        # Perform the shooter setup
         self._shooter_setup_step = 1
         while (self.IsAutonomous() and self.IsEnabled() and
                not self._shooter_setup()):
@@ -311,193 +313,125 @@ class MyRobot(wpilib.SimpleRobot):
         Instantiate a Class using default values.
 
         """
+        # Autonomous initialization
         self._autonomous_init()
+
+        # Method names must be unique for reflection to work,
+        # and they should be descriptive
+        autoscript_finished = False
+        current_command = None
+        current_command_complete = True # Initially true to get 1st command
+
+        if not self._autoscript or not self._autoscript_filename:
+            autoscript_finished = True
+
+        owner = None
+        method = None
+
         # Repeat this loop as long as we're in Autonomous
         while self.IsAutonomous() and self.IsEnabled():
-
-            autoscript_finished = False
-            self._current_command_complete = False
 
             # Read sensors
             self._read_sensors()
             self._print_range()
 
             # Execute autoscript commands
-            if self._autoscript and self._autoscript_filename:
-                # If we see either invalid or end, we're finished
-                if (self._current_command and
-                    self._current_command.command != "invalid" and
-                    self._current_command.command != "end"):
-                    if self._current_command.command == "wait":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 1 or
-                            not self._timer):
-                            self._current_command_complete = True
-                        else:
-                            if not self._current_command_in_progress:
-                                self._timer.stop()
-                                self._timer.start()
-                                self._current_command_in_progress = True
-                            elapsed_time = self._timer.elapsed_time_in_secs()
-                            time_left = (self._current_command.parameters[0] -
-                                         elapsed_time)
-                            if time_left < 0:
-                                self._timer.stop()
-                                self._current_command_complete = True
-                    elif self._current_command.command == "adjust_heading":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 2 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if (self._drive_train.adjust_heading(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "drive_distance":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 2 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if (self._drive_train.drive_distance(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "drive_range":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 2 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if (self._drive_train.drive_to_range(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "drive_time":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 3 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if not self._current_command_in_progress:
-                                self._drive_train.reset_and_start_timer()
-                                self._current_command_in_progress = True
-                            if (self._drive_train.drive_time(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1],
-                                        self._current_command.parameters[2])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "set_heading":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 2 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if (self._drive_train.set_heading(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "turn_time":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 3 or
-                            not self._drive_train):
-                            self._current_command_complete = True
-                        else:
-                            if not self._current_command_in_progress:
-                                self._drive_train.reset_and_start_timer()
-                                self._current_command_in_progress = True
-                            if (self._drive_train.turn_time(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1],
-                                        self._current_command.parameters[2])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "set_feeder_position":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 1 or
-                            not self._feeder):
-                            self._current_command_complete = True
-                        else:
-                            self._current_feeder_position = \
-                                        self._current_command.parameters[0]
-                            self._feeder.set_position(
-                                        self._current_command.parameters[0])
-                            self._current_command_complete = True
-                    elif self._current_command.command == "feed_time":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 3 or
-                            not self._feeder):
-                            self._current_command_complete = True
-                        else:
-                            if not self._current_command_in_progress:
-                                self._feeder.reset_and_start_timer()
-                                self._current_command_in_progress = True
-                            if (self._feeder.feed_time(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1],
-                                        self._current_command.parameters[2])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "auto_fire":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 1 or
-                            not self._shooter):
-                            self._current_command_complete = True
-                        else:
-                            if (self._shooter.auto_fire(
-                                        self._current_command.parameters[0])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "set_shooter":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 2 or
-                            not self._shooter):
-                            self._current_command_complete = True
-                        else:
-                            if (self._shooter.set_position(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1])):
-                                self._current_command_complete = True
-                    elif self._current_command.command == "shoot_time":
-                        if (not self._current_command.parameters or
-                            len(self._current_command.parameters) != 3 or
-                            not self._shooter):
-                            self._current_command_complete = True
-                        else:
-                            if not self._current_command_in_progress:
-                                self._shooter.reset_and_start_timer()
-                                self._current_command_in_progress = True
-                            if (self._shooter.shoot_time(
-                                        self._current_command.parameters[0],
-                                        self._current_command.parameters[1],
-                                        self._current_command.parameters[2])):
-                                self._current_command_complete = True
+            if not autoscript_finished:
 
-                    #TODO targeting?
-                    #TODO other autonomous?
+                # Handle the command
+                # If we found the method, unpack the parameters List
+                # (using *) and call it
+                if not current_command_complete:
+                    try:
+                        current_command_complete = \
+                                method(*current_command.parameters)
+                    except TypeError:
+                        current_command_complete = True
 
-                    # Catchall - for any unrecognized command
+                # Move on to the next command when the current is finished
+                if current_command_complete:
+                    # Get next command
+                    current_command_complete = False
+                    current_command = self._autoscript.get_next_command()
+
+                    # If it's None or invalid or end, we're finished
+                    if (not current_command or
+                        current_command.command == "invalid" or
+                        current_command.command == "end"):
+                        autoscript_finished = True
                     else:
-                        self._current_command_complete = True
+                        # Try to get the method reference using its name
+                        owner, method = self._get_method(
+                                                    current_command.command)
+                        if not method:
+                            current_command_complete = True
+                        # Check if method has '_time' in it
+                        elif '_time' in current_command.command:
+                            # We need to reset its internal timer first
+                            reset = None
+                            owner, reset = self._get_method(
+                                                    'reset_and_start_timer',
+                                                    obj=owner)
+                            if reset:
+                                try:
+                                    reset()
+                                except TypeError:
+                                    current_command_complete = True
+                            else:
+                                current_command_complete = True
 
-                    # Get next command if/when current one is finished
-                    if self._current_command_complete:
-                        self._current_command_complete = False
-                        self._current_command = (
-                                        self._autoscript.get_next_command())
-                else:
-                    autoscript_finished = True
+            # Autoscript is finished
             else:
-                autoscript_finished = True
-
-            if autoscript_finished:
                 # Set all motors to inactive
                 if self._drive_train:
                     self._drive_train.drive(0.0, 0.0, False)
                 if self._feeder:
                     self._feeder.feed(feeder.Direction.STOP, 0.0)
                 if self._shooter:
-                    self._shooter.move(0.0)
+                    self._shooter.move_shooter(0.0)
 
             wpilib.Wait(0.01)
+
+    def _get_method(self, name, obj=None):
+        """This tries to find the matching method in one of the objects.
+
+        Args:
+            name: the name of the method.
+
+        Returns:
+            Object, Method.
+
+        """
+        calling_object = None
+        method = None
+
+        # Determine which object contains the method
+        if not obj:
+            if name:
+                if name in self._robot_names:
+                    calling_object = self
+                elif name in self._drive_train_names:
+                    calling_object = self._drive_train
+                elif name in self._feeder_names:
+                    calling_object = self._feeder
+                elif name in self._shooter_names:
+                    calling_object = self._shooter
+                elif name in self._user_interface_names:
+                    calling_object = self._user_interface
+        else:
+            calling_object = obj
+
+        # Get the method reference from the object
+        if calling_object:
+            try:
+                method = getattr(calling_object, name)
+                # Make sure method is callable
+                if method and not callable(method):
+                    method = None
+            except AttributeError:
+                pass
+
+        return calling_object, method
 
     def _operator_control_init(self):
         """Prepares the robot for Teleop mode."""
@@ -567,6 +501,21 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.SCORING)
 
             wpilib.Wait(0.01)
+
+    def reset_and_start_timer(self):
+        """Resets and restarts the timer."""
+        if self._timer:
+            self._timer.stop()
+            self._timer.start()
+
+    def wait_time(self, duration):
+        """Autonomous method that does nothing for a specified duration."""
+        elapsed_time = self._timer.elapsed_time_in_secs()
+        time_left = duration - elapsed_time
+        if time_left < 0:
+            self._timer.stop()
+            return True
+        return False
 
     def _read_sensors(self):
         """Have the objects read their sensors."""
@@ -654,7 +603,8 @@ class MyRobot(wpilib.SimpleRobot):
             #if self._shooter_setup_step == 1:
             #    if self._feeder:
             #        self._current_feeder_position = common.Direction.DOWN
-            #        self._feeder.set_position(self._current_feeder_position)
+            #        self._feeder.set_feeder_position(
+            #                                self._current_feeder_position)
             #        wpilib.Wait(0.2)
             #    self._shooter_setup_step = 2
             #    return False
@@ -694,23 +644,26 @@ class MyRobot(wpilib.SimpleRobot):
             if self._prep_for_feed_step == 1:
                 if self._feeder:
                     self._current_feeder_position = common.Direction.DOWN
-                    self._feeder.set_position(self._current_feeder_position)
+                    self._feeder.set_feeder_position(
+                                                self._current_feeder_position)
                 self._prep_for_feed_step = 2
             elif self._prep_for_feed_step == 2:
                 if self._shooter:
-                    if self._shooter.set_position(self._catapult_feed_position,
-                                                  1.0):
+                    if self._shooter.set_shooter_position(
+                                                self._catapult_feed_position,
+                                                1.0):
                         self._prep_for_feed_step = -1
         # Prep for low pass
         if self._prep_for_low_pass_step != -1:
             if self._prep_for_low_pass_step == 1:
                 if self._feeder:
                     self._current_feeder_position = common.Direction.DOWN
-                    self._feeder.set_position(self._current_feeder_position)
+                    self._feeder.set_feeder_position(
+                                                self._current_feeder_position)
                 self._prep_for_low_pass_step = 2
             elif self._prep_for_low_pass_step == 2:
                 if self._shooter:
-                    if self._shooter.set_position(
+                    if self._shooter.set_shooter_position(
                                         self._catapult_low_pass_position,
                                         1.0):
                         self._prep_for_low_pass_step = -1
@@ -718,7 +671,8 @@ class MyRobot(wpilib.SimpleRobot):
         if self._truss_pass_step != -1:
             if self._shooter:
                 #if self._shooter.auto_fire(self._truss_pass_power):
-                if self._shooter.set_position(self._truss_pass_position, 1.0):
+                if self._shooter.set_shooter_position(self._truss_pass_position,
+                                                      1.0):
                     self._truss_pass_step = -1
 
     def _check_debug_request(self):
@@ -834,7 +788,7 @@ class MyRobot(wpilib.SimpleRobot):
                 userinterface.JoystickAxis.LEFTY)
         if scoring_left_y != 0.0:
             if self._shooter:
-                self._shooter.move(scoring_left_y)
+                self._shooter.move_shooter(scoring_left_y)
                 # Abort any relevent teleop auto routines
                 self._hold_to_shoot_step = -1
                 self._prep_for_feed_step = -1
@@ -847,7 +801,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._prep_for_feed_step == -1 and
                 self._prep_for_low_pass_step == -1 and
                 self._truss_pass_step == -1):
-                self._shooter.move(0.0)
+                self._shooter.move_shooter(0.0)
 
     def _control_feeder(self):
         """Manually control the feeder."""
@@ -865,7 +819,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._current_feeder_position = common.Direction.DOWN
             else:
                 self._current_feeder_position = common.Direction.UP
-            self._feeder.set_position(self._current_feeder_position)
+            self._feeder.set_feeder_position(self._current_feeder_position)
             # Abort any relevent teleop auto routines
             self._prep_for_feed_step = -1
             self._prep_for_low_pass_step = -1

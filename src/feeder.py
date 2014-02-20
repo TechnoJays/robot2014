@@ -289,7 +289,7 @@ class Feeder(object):
             self._movement_timer.stop()
             self._movement_timer.start()
 
-    def set_position(self, direction):
+    def set_feeder_position(self, direction):
         """Set the feeder arms up or down.
 
         Args:
