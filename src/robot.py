@@ -48,7 +48,6 @@ class MyRobot(wpilib.SimpleRobot):
     _max_hold_to_shoot_time = None
     _min_hold_to_shoot_power = None
     _catapult_feed_position = None
-    _catapult_low_pass_position = None
     _truss_pass_power = None
     _truss_pass_position = None
 
@@ -64,7 +63,6 @@ class MyRobot(wpilib.SimpleRobot):
     _hold_to_shoot_step = -1
     _hold_to_shoot_power = -1
     _prep_for_feed_step = -1
-    _prep_for_low_pass_step = -1
     _truss_pass_step = -1
     _driver_controls_swap_ratio = 1.0
     _hold_to_shoot_power_factor = 0.0
@@ -106,7 +104,6 @@ class MyRobot(wpilib.SimpleRobot):
         self._max_hold_to_shoot_time = None
         self._min_hold_to_shoot_power = None
         self._catapult_feed_position = None
-        self._catapult_low_pass_position = None
         self._truss_pass_power = None
         self._truss_pass_position = None
 
@@ -123,7 +120,6 @@ class MyRobot(wpilib.SimpleRobot):
         self._hold_to_shoot_step = -1
         self._hold_to_shoot_power = 0
         self._prep_for_feed_step = -1
-        self._prep_for_low_pass_step = -1
         self._truss_pass_step = -1
         self._hold_to_shoot_power_factor = 0.0
         self._shooter_setup_step = -1
@@ -187,9 +183,6 @@ class MyRobot(wpilib.SimpleRobot):
                                                 "MIN_HOLD_TO_SHOOT_POWER")
             self._catapult_feed_position = self._parameters.get_value(section,
                                                 "CATAPULT_FEED_POSITION")
-            self._catapult_low_pass_position = self._parameters.get_value(
-                                                section,
-                                                "CATAPULT_LOW_PASS_POSITION")
             self._truss_pass_power = self._parameters.get_value(section,
                                                 "TRUSS_PASS_POWER")
             self._truss_pass_position = self._parameters.get_value(section,
@@ -569,14 +562,6 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.Y)):
             self._prep_for_feed_step = 1
-        # Press X to prepare to pick up a ball for a low pass
-        if (self._user_interface.get_button_state(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickButtons.X) == 1 and
-            self._user_interface.button_state_changed(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickButtons.X)):
-            self._prep_for_low_pass_step = 1
         # Press left bumper to pass over the truss
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
@@ -653,20 +638,6 @@ class MyRobot(wpilib.SimpleRobot):
                                                 self._catapult_feed_position,
                                                 1.0):
                         self._prep_for_feed_step = -1
-        # Prep for low pass
-        if self._prep_for_low_pass_step != -1:
-            if self._prep_for_low_pass_step == 1:
-                if self._feeder:
-                    self._current_feeder_position = common.Direction.DOWN
-                    self._feeder.set_feeder_position(
-                                                self._current_feeder_position)
-                self._prep_for_low_pass_step = 2
-            elif self._prep_for_low_pass_step == 2:
-                if self._shooter:
-                    if self._shooter.set_shooter_position(
-                                        self._catapult_low_pass_position,
-                                        1.0):
-                        self._prep_for_low_pass_step = -1
         # Truss pass
         if self._truss_pass_step != -1:
             if self._shooter:
@@ -720,7 +691,6 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.JoystickButtons.BACK) == 1):
             self._hold_to_shoot_step = -1
             self._prep_for_feed_step = -1
-            self._prep_for_low_pass_step = -1
             self._truss_pass_step = -1
 
     def _check_alternate_speed_modes(self):
@@ -792,14 +762,12 @@ class MyRobot(wpilib.SimpleRobot):
                 # Abort any relevent teleop auto routines
                 self._hold_to_shoot_step = -1
                 self._prep_for_feed_step = -1
-                self._prep_for_low_pass_step = -1
                 self._truss_pass_step = -1
         else:
             # Make sure we don't mess with any teleop auto routines
             # if they're running
             if (self._hold_to_shoot_step == -1 and
                 self._prep_for_feed_step == -1 and
-                self._prep_for_low_pass_step == -1 and
                 self._truss_pass_step == -1):
                 self._shooter.move_shooter(0.0)
 
@@ -822,7 +790,6 @@ class MyRobot(wpilib.SimpleRobot):
             self._feeder.set_feeder_position(self._current_feeder_position)
             # Abort any relevent teleop auto routines
             self._prep_for_feed_step = -1
-            self._prep_for_low_pass_step = -1
         # Manually control feeder motors
         if scoring_right_y != 0.0:
             if self._feeder:
