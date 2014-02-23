@@ -31,7 +31,7 @@ class TargetHandler(socketserver.StreamRequestHandler):
                 pass
             if json_dict:
                 try:
-                    new_target = targeting.Target(**json_dict)
+                    new_target = target.Target(**json_dict)
                 except TypeError:
                     pass
             if new_target:

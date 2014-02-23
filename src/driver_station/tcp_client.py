@@ -1,3 +1,11 @@
+"""This module is the tcp client that gets targets and sends them to a robot.
+
+NOTE: THIS RUNS ON THE DRIVER STATION, NOT ON THE ROBOT.
+
+DO NOT UPLOAD TO THE ROBOT!!
+
+"""
+
 import json_helper
 import socket
 import targeting
@@ -6,13 +14,16 @@ import time
 
 
 class ImageProcessor(threading.Thread):
+    """Thread that gets targets and sends them to a tcp server."""
 
     def __init__(self, port=1180):
+        """Initialize the image processing thread."""
         self.port = port
         self._sock = None;
         threading.Thread.__init__(self);
 
     def run(self):
+        """Background thread that gets images and sends them to the server."""
         while True:
             try:
                 if self._sock == None:
@@ -28,13 +39,11 @@ class ImageProcessor(threading.Thread):
             while True:
                 try:
                     data = None
-                    #current_target = targeting.get_target()
-                    args = {'distance': 5.0, 'angle':-10, 'is_hot':True, 'confidence':100}
-                    current_target = targeting.Target(**args)
-                    if current_target:
+                    targets = targeting.get_targets()
+                    for current_target in targets:
                         data = json_helper.to_json(current_target)
-                    if data:
-                        self._sock.send(bytes(data + '\n', "utf-8"))
+                        if data:
+                            self._sock.send(bytes(data + '\n', "utf-8"))
                 except Exception:
                     self._sock.close()
                     self._sock = None
