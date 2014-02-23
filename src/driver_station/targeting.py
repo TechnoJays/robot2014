@@ -40,8 +40,8 @@ class Targeting(object):
     CAMERA_VIEW_ANGLE = 49
     CAMERA_RES_HEIGHT = 640
     CAMERA_RES_WIDTH = 480
-    GREEN_MIN = np.array([75, 160, 65],np.uint8)
-    GREEN_MAX = np.array([92, 255, 180],np.uint8)
+    GREEN_MIN = np.array([75, 160, 65], np.uint8)
+    GREEN_MAX = np.array([92, 255, 180], np.uint8)
     RECTANGULARITY_THRESHOLD = 40
     ASPECT_RATIO_THRESHOLD = 55
 
@@ -98,7 +98,7 @@ class Targeting(object):
             target_height = 32
             distance = self.CAMERA_RES_WIDTH * target_height / (height * 12 * 2 * math.tan(self.CAMERA_VIEW_ANGLE * math.pi / (180 * 2)))
         except Exception as excep:
-            print str(excep)
+            print(str(excep))
         return distance
 
     def calculate_angle(self, v_contour_data):

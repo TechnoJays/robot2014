@@ -21,9 +21,9 @@ class ImageProcessor(threading.Thread):
     def __init__(self, port=1180):
         """Initialize the image processing thread."""
         self.port = port
-        self._sock = None;
+        self._sock = None
         self._targeting = targeting.Targeting()
-        threading.Thread.__init__(self);
+        threading.Thread.__init__(self)
 
     def run(self):
         """Background thread that gets images and sends them to the server."""
@@ -76,7 +76,7 @@ class ImageProcessor(threading.Thread):
             time.sleep(1)
 
 if __name__ == '__main__':
-    proc = ImageProcessor();
-    proc.start();
+    iproc = ImageProcessor()
+    iproc.start()
     #proc.setDaemon(True)
 
