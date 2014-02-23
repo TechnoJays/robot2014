@@ -19,7 +19,7 @@ import queue
 import shooter
 import stopwatch
 import target
-import tcp_server
+import target_server
 import userinterface
 
 
@@ -169,8 +169,13 @@ class MyRobot(wpilib.SimpleRobot):
         self._feeder_names = dir(self._feeder)
         self._shooter_names = dir(self._shooter)
         self._user_interface_names = dir(self._user_interface)
+
+        # Create a queue for transferring Targets from the image server to us
+        # It can only hold 2, since there should only be at most 2 targets found
         self._target_queue = queue.Queue(2)
-        self._image_server = tcp_server.ImageServer(self._target_queue)
+
+        # Create the TCP image server, and start it in a background thread
+        self._image_server = target_server.ImageServer(self._target_queue)
         self._image_server.start()
 
     def load_parameters(self):
@@ -246,11 +251,6 @@ class MyRobot(wpilib.SimpleRobot):
                                                 self._autoscript_filename,
                                                 True)
 
-        # This would be used for camera initialization
-        if self._timer:
-            self._timer.stop()
-            self._timer.start()
-
         self.GetWatchdog().SetEnabled(False)
 
     def Disabled(self):
@@ -301,8 +301,6 @@ class MyRobot(wpilib.SimpleRobot):
     def _autonomous_init(self):
         """Prepares the robot for Autonomous mode."""
         # Perform initialization before looping
-        if self._timer:
-            self._timer.stop()
         if self._autoscript and self._autoscript_filename:
             self._autoscript.parse(self._autoscript_filename)
 
@@ -324,6 +322,7 @@ class MyRobot(wpilib.SimpleRobot):
             except queue.Empty:
                 pass
 
+        # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
 
         # Perform the shooter setup
@@ -350,6 +349,8 @@ class MyRobot(wpilib.SimpleRobot):
         if not self._autoscript or not self._autoscript_filename:
             autoscript_finished = True
 
+        # These store the owning object and method pointer for each
+        # autoscript command (using reflection and introspection)
         owner = None
         method = None
 
@@ -457,7 +458,7 @@ class MyRobot(wpilib.SimpleRobot):
         else:
             calling_object = obj
 
-        # Get the method reference from the object
+        # Get the method pointer (sort of) from the object
         if calling_object:
             try:
                 method = getattr(calling_object, name)
@@ -478,6 +479,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._disable_range_print = False
         self._set_robot_state(common.ProgramState.TELEOP)
 
+        # Enable the watchdog
         dog = self.GetWatchdog()
         dog.SetEnabled(True)
         dog.SetExpiration(1.0)
@@ -579,8 +581,6 @@ class MyRobot(wpilib.SimpleRobot):
             self._feeder.set_robot_state(state)
         if self._shooter:
             self._shooter.set_robot_state(state)
-        #if self._targeting:
-        #    self._targeting.set_robot_state(state)
         if self._user_interface:
             self._user_interface.set_robot_state(state)
 
@@ -590,12 +590,15 @@ class MyRobot(wpilib.SimpleRobot):
         if (self._user_interface.button_state_changed(
                     userinterface.UserControllers.SCORING,
                     userinterface.JoystickButtons.RIGHTTRIGGER)):
+            # If the trigger is just now held down, start counting the duration
             if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.RIGHTTRIGGER) == 1):
                 self._timer.start()
                 self._hold_to_shoot_step = 1
+            # If the trigger has been let go, calcluate shot power and shoot
             else:
+                # Calculate how long the trigger was held and convert to a %
                 self._timer.stop()
                 duration = self._timer.elapsed_time_in_secs()
                 requested_power = (((duration * 1.0) /
@@ -646,6 +649,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         """
         if self._shooter:
+            # FIXME: a decision needs to be made for this
             # This requires the air tank to be pre-charged before a match
             #if self._shooter_setup_step == 1:
             #    if self._feeder:
@@ -686,21 +690,28 @@ class MyRobot(wpilib.SimpleRobot):
             True when complete.
 
         """
+        # This is setup for using aim_at_target in autonomous mode
+        # This is required because we can't set the aim_at_target_step variable
+        # since we now use reflection/introspection.
         if self._aim_at_target_step == -2:
             self._aim_at_target_step = 1
             return False
 
+        # Figure out which target to aim at
         current_target = desired_target
         if side:
             for trg in self._current_targets:
                 if trg.side == side:
                     current_target = trg
 
+        # Bail if we don't have a target
         if not current_target:
             return True
 
+        # The first step is to turn to face the target
         if self._aim_at_target_step == 1:
-            # Include an offset
+            # Include an offset. This is required since the image targets aren't
+            # exactly where we want to aim (they're to the outside of the goals)
             adjustment = current_target.angle
             if current_target.side == target.Side.LEFT:
                 adjustment += self._shooting_angle_offset
@@ -708,6 +719,7 @@ class MyRobot(wpilib.SimpleRobot):
                 adjustment -= self._shooting_angle_offset
             if self._drive_train.adjust_heading(adjustment, 1.0):
                 self._aim_at_target_step = 2
+        # Step 2 is to drive until we're at the optimum distance to shoot
         elif self._aim_at_target_step == 2:
             if self._drive_train.drive_to_range(self._optimum_shooting_range,
                                                 1.0):
@@ -730,6 +742,7 @@ class MyRobot(wpilib.SimpleRobot):
             True when complete.
 
         """
+        # Figure out which target to check, and then check if it's 'hot'
         if side:
             for trg in self._current_targets:
                 if trg.side == side and trg.is_hot:
@@ -744,6 +757,9 @@ class MyRobot(wpilib.SimpleRobot):
     def _perform_tele_auto(self):
         """Perform teleop autonomous actions."""
         # Hold to shoot
+        # Print the shot power to the screen, then briefly move the shooter
+        # down before shooting. The students said they got better performance
+        # doing this..?
         if self._hold_to_shoot_step == 2:
             self._disable_range_print = True
             self._range_print_timer.start()
@@ -753,38 +769,49 @@ class MyRobot(wpilib.SimpleRobot):
             if self._shooter:
                 if self._shooter.shoot_time(0.1, common.Direction.DOWN, 1.0):
                     self._hold_to_shoot_step = 3
+        # Actually shoot the ball
         elif self._hold_to_shoot_step == 3:
             if self._shooter:
                 if self._shooter.auto_fire(self._hold_to_shoot_power):
                     self._hold_to_shoot_step = -1
+
         # Prep for feed
         if self._prep_for_feed_step != -1:
+            # Step 1 is to make sure the feeder arms are down
             if self._prep_for_feed_step == 1:
                 if self._feeder:
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_feeder_position(
                                                 self._current_feeder_position)
                 self._prep_for_feed_step = 2
+            # Step 2 is to move the catapult arm all the way down
             elif self._prep_for_feed_step == 2:
                 if self._shooter:
                     if self._shooter.set_shooter_position(
                                                 self._catapult_feed_position,
                                                 1.0):
                         self._prep_for_feed_step = -1
+
         # Truss pass
         if self._truss_pass_step != -1:
             if self._shooter:
-                #if self._shooter.auto_fire(self._truss_pass_power):
+                # This does a partial shot, moving the shooter at full speed,
+                # but stopping before reaching the full range of motion
                 if self._shooter.set_shooter_position(self._truss_pass_position,
                                                       1.0):
                     self._truss_pass_step = -1
+
         # Aim at target
         if self._aim_at_target_step > 0:
+            # Make sure we have targets to aim at
             if len(self._current_targets) > 0:
+                # Sort targets based on which one we're most closely facing
                 self._current_targets = sorted(self._current_targets,
                                                lambda x: math.fabs(x.angle),
                                                reverse=False)
-                self.aim_at_target(desired_target=self._current_targets[0])
+                # Aim at the nearest target
+                if self.aim_at_target(desired_target=self._current_targets[0]):
+                    self._aim_at_target_step = -1
             else:
                 self._aim_at_target_step = -1
 
@@ -796,6 +823,7 @@ class MyRobot(wpilib.SimpleRobot):
             self._user_interface.button_state_changed(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickButtons.BACK)):
+            # Disable the range to object prints briefly
             self._disable_range_print = True
             self._range_print_timer.start()
             self._user_interface.output_user_message("Diagnostics",
@@ -819,6 +847,7 @@ class MyRobot(wpilib.SimpleRobot):
 
     def _print_range(self):
         """Print the range to the nearest object."""
+        # Only print the range if nothing else important is being shown
         if not self._disable_range_print:
             if self._drive_train:
                 rng = self._drive_train.get_range()
@@ -828,8 +857,11 @@ class MyRobot(wpilib.SimpleRobot):
 
     def _check_ui_print_timeout(self):
         """Show any non-range message on the screen for 2 seconds."""
+        # If we're currently suppressing the range prints, check if the timeout
+        # is over
         if self._disable_range_print:
             elapsed_time = self._range_print_timer.elapsed_time_in_secs()
+            # TODO: this should be a parameter
             if elapsed_time > 2.0:
                 self._range_print_timer.stop()
                 self._disable_range_print = False
@@ -870,8 +902,10 @@ class MyRobot(wpilib.SimpleRobot):
             self._user_interface.button_state_changed(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickButtons.RIGHTTRIGGER)):
+            # Swap the driver controls to be the opposite of what they were
             self._driver_controls_swap_ratio = (self._driver_controls_swap_ratio
                                                 * -1.0)
+            # Print the notification for several seconds
             self._disable_range_print = True
             self._range_print_timer.start()
             if self._driver_controls_swap_ratio > 0:
@@ -901,7 +935,7 @@ class MyRobot(wpilib.SimpleRobot):
         else:
             # Make sure we don't mess with any teleop auto routines
             # if they're running
-            if self._aim_at_target_step == -1:
+            if self._aim_at_target_step < 0:
                 self._drive_train.arcade_drive(0.0, 0.0, False)
 
     def _control_shooter(self):
@@ -929,6 +963,7 @@ class MyRobot(wpilib.SimpleRobot):
         scoring_right_y = self._user_interface.get_axis_value(
                 userinterface.UserControllers.SCORING,
                 userinterface.JoystickAxis.RIGHTY)
+
         # Toggle feeder arms
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
@@ -943,6 +978,7 @@ class MyRobot(wpilib.SimpleRobot):
             self._feeder.set_feeder_position(self._current_feeder_position)
             # Abort any relevent teleop auto routines
             self._prep_for_feed_step = -1
+
         # Manually control feeder motors
         if scoring_right_y != 0.0:
             if self._feeder:
