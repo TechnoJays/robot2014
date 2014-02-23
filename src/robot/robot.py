@@ -311,8 +311,8 @@ class MyRobot(wpilib.SimpleRobot):
         self.GetWatchdog().SetEnabled(False)
 
         # Get targets in the queue if any exist
+        self._current_targets = []
         if not self._target_queue.empty():
-            self._current_targets = []
             try:
                 self._current_targets.append(self._target_queue.get(
                                                                 block=False))
@@ -356,8 +356,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._print_range()
 
             # Get targets in the queue if any exist
+            self._current_targets = []
             if not self._target_queue.empty():
-                self._current_targets = []
                 try:
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))
@@ -494,8 +494,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._read_sensors()
 
             # Get targets in the queue if any exist
+            self._current_targets = []
             if not self._target_queue.empty():
-                self._current_targets = []
                 try:
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))
@@ -737,6 +737,14 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter.log_current_state()
                 state = self._shooter.get_current_state()
                 self._user_interface.output_user_message(state, False)
+            if len(self._current_targets) > 0:
+                for trg in self._current_targets:
+                    message = "%(dis)4.1f, %(ang)4.1f" % {'dis':trg.distance,
+                                                          'ang':trg.angle}
+                    self._user_interface.output_user_message(message, False)
+                    message = "%(hot)s, %(side)1.0f" % {'hot':str(trg.is_hot),
+                                                        'side':trg.side}
+                    self._user_interface.output_user_message(message, False)
 
     def _print_range(self):
         """Print the range to the nearest object."""
