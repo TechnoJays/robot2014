@@ -9,27 +9,25 @@ DO NOT UPLOAD TO THE ROBOT!!
 import json_helper
 import socket
 import targeting
-import threading
 import time
 
 
-class ImageProcessor(threading.Thread):
-    """Thread that gets targets and sends them to a tcp server."""
+class ImageProcessor(object):
+    """Gets targets and sends them to a tcp server."""
 
     _targeting = None
 
     def __init__(self, port=1180):
-        """Initialize the image processing thread."""
+        """Initialize the image processor."""
         self.port = port
         self._sock = None
         self._targeting = targeting.Targeting()
-        threading.Thread.__init__(self)
 
-    def run(self):
-        """Background thread that gets images and sends them to the server."""
+    def process(self):
+        """Gets images and sends them to the server."""
         robot_connected = False
         camera_connected = False
-        # Loop continuously in the background thread
+        # Loop continuously
         while True:
             # Try to connect to the robot
             if not robot_connected:
@@ -43,6 +41,8 @@ class ImageProcessor(threading.Thread):
                     address = ("10.0.94.2", self.port)
                     self._sock.connect(address)
                     robot_connected = True
+                except KeyboardInterrupt:
+                    raise
                 except Exception:
                     print "Robot connection failed."
                     self._sock = None
@@ -79,6 +79,8 @@ class ImageProcessor(threading.Thread):
                             # Python2
                             self._sock.send(bytes(data + '\n'))
                 # If anything fails, bail out and try to reconnect
+                except KeyboardInterrupt:
+                    raise
                 except Exception as excep:
                     print "Connection error, disconnected: " + str(excep)
                     self._sock.close()
@@ -93,9 +95,7 @@ class ImageProcessor(threading.Thread):
 
 # This lets us run this as a script
 if __name__ == '__main__':
-    # Create the Image Processor and start it in a background thread
-    # TODO: This (client) side doesn't need to be in a background thread...
+    # Create the Image Processor and start it
     iproc = ImageProcessor()
-    iproc.start()
-    #proc.setDaemon(True)
+    iproc.process()
 
