@@ -2,7 +2,7 @@ import json
 import queue
 import socketserver
 import threading
-import targeting
+import target
 import time
 
 
@@ -56,9 +56,9 @@ class ImageServer(threading.Thread):
                                            self._data_queue);
         self._server.serve_forever()
 
-if __name__ == '__main__':
-    data_queue = queue.Queue(1)
-    serv = ImageServer(data_queue);
-    serv.start();
+#if __name__ == '__main__':
+#    data_queue = queue.Queue(2)
+#    serv = ImageServer(data_queue);
+#    serv.start();
     #serv.setDaemon(True)
 
