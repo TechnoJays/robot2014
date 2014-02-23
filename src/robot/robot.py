@@ -321,7 +321,7 @@ class MyRobot(wpilib.SimpleRobot):
                                                                 block=False))
                 self._current_targets.append(self._target_queue.get(
                                                                 block=False))
-            except queue.Empty
+            except queue.Empty:
                 pass
 
         self._aim_at_target_step = -2
@@ -368,7 +368,7 @@ class MyRobot(wpilib.SimpleRobot):
                                                                 block=False))
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))
-                except queue.Empty
+                except queue.Empty:
                     pass
 
             # Execute autoscript commands
@@ -506,7 +506,7 @@ class MyRobot(wpilib.SimpleRobot):
                                                                 block=False))
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))
-                except queue.Empty
+                except queue.Empty:
                     pass
 
             # Perform tele-auto routines
@@ -670,7 +670,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter_setup_step = -1
         return True
 
-    def aim_at_target(self, side=None, target=None):
+    def aim_at_target(self, side=None, desired_target=None):
         """Turn and drive until we are aiming at a target.
 
         This will turn the robot left or right, as well as drive forward or
@@ -680,7 +680,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         Args:
             side: the side to aim at.
-            target: The target.Target to aim at.
+            desired_target: The target.Target to aim at.
 
         Returns:
             True when complete.
@@ -690,7 +690,7 @@ class MyRobot(wpilib.SimpleRobot):
             self._aim_at_target_step = 1
             return False
 
-        current_target = target
+        current_target = desired_target
         if side:
             for trg in self._current_targets:
                 if trg.side == side:
@@ -716,7 +716,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         return False
 
-    def wait_for_hot_goal(self, side=None, target=None):
+    def wait_for_hot_goal(self, side=None, desired_target=None):
         """Wait for the target goal to be 'hot'.
 
         This can be called with either a particular target in mind or a
@@ -724,7 +724,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         Args:
             side: the side to become 'hot'
-            target: the target to become 'hot'
+            desired_target: the target to become 'hot'
 
         Returns:
             True when complete.
@@ -734,8 +734,8 @@ class MyRobot(wpilib.SimpleRobot):
             for trg in self._current_targets:
                 if trg.side == side and trg.is_hot:
                     return True
-        elif target:
-            if target.is_hot:
+        elif desired_target:
+            if desired_target.is_hot:
                 return True
         else:
             return True
@@ -778,6 +778,15 @@ class MyRobot(wpilib.SimpleRobot):
                 if self._shooter.set_shooter_position(self._truss_pass_position,
                                                       1.0):
                     self._truss_pass_step = -1
+        # Aim at target
+        if self._aim_at_target_step > 0:
+            if len(self._current_targets) > 0:
+                self._current_targets = sorted(self._current_targets,
+                                               lambda x: math.fabs(x.angle),
+                                               reverse=False)
+                self.aim_at_target(desired_target=self._current_targets[0])
+            else:
+                self._aim_at_target_step = -1
 
     def _check_debug_request(self):
         """Print debug info to driver station."""

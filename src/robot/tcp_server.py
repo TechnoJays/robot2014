@@ -1,5 +1,4 @@
 import json
-import queue
 import socketserver
 import threading
 import target
@@ -45,20 +44,20 @@ class ImageServer(threading.Thread):
 
     def __init__(self, data_queue, port=1180):
         self.port = port
-        self._server = None;
-        threading.Thread.__init__(self);
+        self._server = None
+        threading.Thread.__init__(self)
         self._data_queue = data_queue
 
     def run(self):
         if self._server == None:
-            address = ('localhost', self.port);
+            address = ('localhost', self.port)
             self._server = ServerWithQueue(address, TargetHandler,
-                                           self._data_queue);
+                                           self._data_queue)
         self._server.serve_forever()
 
 #if __name__ == '__main__':
 #    data_queue = queue.Queue(2)
-#    serv = ImageServer(data_queue);
-#    serv.start();
+#    serv = ImageServer(data_queue)
+#    serv.start()
     #serv.setDaemon(True)
 
