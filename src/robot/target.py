@@ -20,7 +20,7 @@ class Target(object):
         """Create a target using a dictionary.
 
         Args:
-            **values: a dictionary pointer with the values.
+            **values: a keyword dictionary with the values.
 
         """
         if values:

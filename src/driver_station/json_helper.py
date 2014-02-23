@@ -1,4 +1,7 @@
+"""This module provides JSON helper functions."""
+
 import json
+
 
 def to_json(obj):
     """Convert an object to JSON.
@@ -9,7 +12,6 @@ def to_json(obj):
     Returns:
         JSON-encoded object string.
     """
-
     def serialize(obj):
         """Recursive method to iterate through an object's properties.
 
