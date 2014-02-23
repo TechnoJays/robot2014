@@ -36,7 +36,8 @@ class Targeting(object):
     # TODO: search the rest of the code for constants
 
     # Camera view angle (49 for 1013)
-    CAMERA_URL = "http://10.0.94.11/axis-cgi/mjpg/video.cgi?resolution=640x480"
+    CAMERA_URL = ("http://10.0.94.11/axis-cgi/mjpg/video.cgi?resolution=640x480"
+                  "&dummy=param.mjpg")
     CAMERA_VIEW_ANGLE = 49
     CAMERA_RES_HEIGHT = 640
     CAMERA_RES_WIDTH = 480
@@ -62,7 +63,9 @@ class Targeting(object):
     def get_image(self):
         """Get the latest frame from the VidCap object."""
         if self._vcap:
-            return self._vcap.read()
+            result, img = self._vcap.read()
+            if result:
+                return img
         else:
             return None
         #return cv2.imread('input.jpg')
