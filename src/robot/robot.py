@@ -721,6 +721,17 @@ class MyRobot(wpilib.SimpleRobot):
                 self._aim_at_target_step = 2
         # Step 2 is to drive until we're at the optimum distance to shoot
         elif self._aim_at_target_step == 2:
+            # Alternative method is to use camera target distance
+            #distance_left = (current_target.distance -
+            #                 self._optimum_shooting_range)
+            #if (math.fabs(distance_left) < 0.5):
+            #    self._drive_train.arcade_drive(0.0, 0.0, False)
+            #    self._aim_at_target_step = -1
+            #else:
+            #    direction = common.Direction.FORWARD if distance_left > 0 \
+            #        else common.Direction.BACKWARD
+            #    self._drive_train.drive_time(0.1, direction, 0.8)
+            # Normal method is to use range finder to drive
             if self._drive_train.drive_to_range(self._optimum_shooting_range,
                                                 1.0):
                 self._aim_at_target_step = -1
