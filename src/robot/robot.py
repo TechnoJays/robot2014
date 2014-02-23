@@ -15,9 +15,11 @@ import drivetrain
 import feeder
 import math
 import parameters
+import queue
 import shooter
 import stopwatch
-#import targeting
+import target
+import tcp_server
 import userinterface
 
 
@@ -39,7 +41,7 @@ class MyRobot(wpilib.SimpleRobot):
     _log = None
     _parameters = None
     _shooter = None
-    #_targeting = None
+    _image_server = None
     _timer = None
     _range_print_timer = None
     _user_interface = None
@@ -75,6 +77,8 @@ class MyRobot(wpilib.SimpleRobot):
     _feeder_names = None
     _shooter_names = None
     _user_interface_names = None
+    _target_queue = None
+    _current_targets = None
 
     def _initialize(self, params, logging_enabled):
         """Initialize the robot.
@@ -97,7 +101,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._log = None
         self._parameters = None
         self._shooter = None
-        #self._targeting = None
+        self._image_server = None
         self._timer = None
         self._range_print_timer = None
         self._user_interface = None
@@ -128,6 +132,8 @@ class MyRobot(wpilib.SimpleRobot):
         self._hold_to_shoot_power_factor = 0.0
         self._shooter_setup_step = -1
         self._disable_range_print = False
+        self._target_queue = None
+        self._current_targets = None
 
         # Enable logging if specified
         if logging_enabled:
@@ -161,6 +167,9 @@ class MyRobot(wpilib.SimpleRobot):
         self._feeder_names = dir(self._feeder)
         self._shooter_names = dir(self._shooter)
         self._user_interface_names = dir(self._user_interface)
+        self._target_queue = queue.Queue(2)
+        self._image_server = tcp_server.ImageServer(self._target_queue)
+        self._image_server.start()
 
     def load_parameters(self):
         """Load values from a parameter file and create and initialize objects.
@@ -301,6 +310,17 @@ class MyRobot(wpilib.SimpleRobot):
         self._set_robot_state(common.ProgramState.AUTONOMOUS)
         self.GetWatchdog().SetEnabled(False)
 
+        # Get targets in the queue if any exist
+        if not self._target_queue.empty():
+            self._current_targets = []
+            try:
+                self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+                self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+            except queue.Empty
+                pass
+
         # Perform the shooter setup
         self._shooter_setup_step = 1
         while (self.IsAutonomous() and self.IsEnabled() and
@@ -334,6 +354,17 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             self._read_sensors()
             self._print_range()
+
+            # Get targets in the queue if any exist
+            if not self._target_queue.empty():
+                self._current_targets = []
+                try:
+                    self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+                    self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+                except queue.Empty
+                    pass
 
             # Execute autoscript commands
             if not autoscript_finished:
@@ -461,6 +492,17 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Read sensors
             self._read_sensors()
+
+            # Get targets in the queue if any exist
+            if not self._target_queue.empty():
+                self._current_targets = []
+                try:
+                    self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+                    self._current_targets.append(self._target_queue.get(
+                                                                block=False))
+                except queue.Empty
+                    pass
 
             # Perform tele-auto routines
             self._perform_tele_auto()
