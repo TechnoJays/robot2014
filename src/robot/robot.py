@@ -331,6 +331,8 @@ class MyRobot(wpilib.SimpleRobot):
             except queue.Empty
                 pass
 
+        self._aim_at_target_step = -2
+
         # Perform the shooter setup
         self._shooter_setup_step = 1
         while (self.IsAutonomous() and self.IsEnabled() and
@@ -613,7 +615,7 @@ class MyRobot(wpilib.SimpleRobot):
                     self._hold_to_shoot_power = 100.0
                 self._shooter.reset_and_start_timer()
                 self._hold_to_shoot_step = 2
-        # Press Y to prepare to pick up a ball
+        # Press Y on scoring to prepare to pick up a ball
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.Y) == 1 and
@@ -621,6 +623,14 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.SCORING,
                         userinterface.JoystickButtons.Y)):
             self._prep_for_feed_step = 1
+        # Press Y on driver to auto-aim
+        if (self._user_interface.get_button_state(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.Y) == 1 and
+            self._user_interface.button_state_changed(
+                        userinterface.UserControllers.DRIVER,
+                        userinterface.JoystickButtons.Y)):
+            self._aim_at_target_step = 1
         # Press X to prepare to pick up a ball for a low pass
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
