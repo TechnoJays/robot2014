@@ -624,14 +624,6 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickButtons.Y)):
             self._aim_at_target_step = 1
-        # Press X to prepare to pick up a ball for a low pass
-        if (self._user_interface.get_button_state(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickButtons.X) == 1 and
-            self._user_interface.button_state_changed(
-                        userinterface.UserControllers.SCORING,
-                        userinterface.JoystickButtons.X)):
-            self._prep_for_low_pass_step = 1
         # Press left bumper to pass over the truss
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
