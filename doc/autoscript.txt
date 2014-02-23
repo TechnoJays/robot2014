@@ -1,6 +1,7 @@
 auto_script commands:
 
 adjust_heading(adjustment, speed)
+aim_at_target(side)
 auto_fire(power_as_percent)
 drive_distance(distance, speed)
 drive_time(time, direction, speed)
@@ -12,4 +13,5 @@ set_shooter_position(position, speed)
 shoot_time(time, direction, speed)
 turn_time(time, direction, speed)
 turn_to_heading(heading, speed)
+wait_for_hot_goal(side)
 wait_time(duration)

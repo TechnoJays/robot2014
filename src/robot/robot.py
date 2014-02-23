@@ -53,6 +53,8 @@ class MyRobot(wpilib.SimpleRobot):
     _catapult_low_pass_position = None
     _truss_pass_power = None
     _truss_pass_position = None
+    _optimum_shooting_range = None
+    _shooting_angle_offset = None
 
     # Private member variables
     _log_enabled = False
@@ -71,6 +73,7 @@ class MyRobot(wpilib.SimpleRobot):
     _driver_controls_swap_ratio = 1.0
     _hold_to_shoot_power_factor = 0.0
     _shooter_setup_step = -1
+    _aim_at_target_step = -1
     _disable_range_print = False
     _robot_names = None
     _drive_train_names = None
@@ -113,6 +116,8 @@ class MyRobot(wpilib.SimpleRobot):
         self._catapult_low_pass_position = None
         self._truss_pass_power = None
         self._truss_pass_position = None
+        self._optimum_shooting_range = None
+        self._shooting_angle_offset = None
 
         # Initialize private member variables
         self._log_enabled = False
@@ -131,6 +136,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._truss_pass_step = -1
         self._hold_to_shoot_power_factor = 0.0
         self._shooter_setup_step = -1
+        self._aim_at_target_step = -1
         self._disable_range_print = False
         self._target_queue = None
         self._current_targets = None
@@ -203,6 +209,10 @@ class MyRobot(wpilib.SimpleRobot):
                                                 "TRUSS_PASS_POWER")
             self._truss_pass_position = self._parameters.get_value(section,
                                                 "TRUSS_PASS_POSITION")
+            self._optimum_shooting_range = self._parameters.get_value(section,
+                                                "OPTIMUM_SHOOTING_RANGE")
+            self._shooting_angle_offset = self._parameters.get_value(section,
+                                                "SHOOTING_ANGLE_OFFSET")
 
         self._hold_to_shoot_power_factor = ((100.0 -
                                              self._min_hold_to_shoot_power) /
@@ -665,6 +675,77 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter_setup_step = -1
         return True
 
+    def aim_at_target(self, side=None, target=None):
+        """Turn and drive until we are aiming at a target.
+
+        This will turn the robot left or right, as well as drive forward or
+        backward until the right distance is reached to shoot.  This can be
+        called with either a particular target in mind or a
+        side of the playing field/target wall.
+
+        Args:
+            side: the side to aim at.
+            target: The target.Target to aim at.
+
+        Returns:
+            True when complete.
+
+        """
+        if self._aim_at_target_step == -2:
+            self._aim_at_target_step = 1
+            return False
+
+        current_target = target
+        if side:
+            for trg in self._current_targets:
+                if trg.side == side:
+                    current_target = trg
+
+        if not current_target:
+            return True
+
+        if self._aim_at_target_step == 1:
+            # Include an offset
+            adjustment = current_target.angle
+            if current_target.side == target.Side.LEFT:
+                adjustment += self._shooting_angle_offset
+            elif current_target.side == target.Side.RIGHT:
+                adjustment -= self._shooting_angle_offset
+            if self._drive_train.adjust_heading(adjustment, 1.0):
+                self._aim_at_target_step = 2
+        elif self._aim_at_target_step == 2:
+            if self._drive_train.drive_to_range(self._optimum_shooting_range,
+                                                1.0):
+                self._aim_at_target_step = -1
+            return True
+
+        return False
+
+    def wait_for_hot_goal(self, side=None, target=None):
+        """Wait for the target goal to be 'hot'.
+
+        This can be called with either a particular target in mind or a
+        side of the playing field/target wall.
+
+        Args:
+            side: the side to become 'hot'
+            target: the target to become 'hot'
+
+        Returns:
+            True when complete.
+
+        """
+        if side:
+            for trg in self._current_targets:
+                if trg.side == side and trg.is_hot:
+                    return True
+        elif target:
+            if target.is_hot:
+                return True
+        else:
+            return True
+        return False
+
     def _perform_tele_auto(self):
         """Perform teleop autonomous actions."""
         # Hold to shoot
@@ -772,6 +853,7 @@ class MyRobot(wpilib.SimpleRobot):
             self._prep_for_feed_step = -1
             self._prep_for_low_pass_step = -1
             self._truss_pass_step = -1
+            self._aim_at_target_step = -1
 
     def _check_alternate_speed_modes(self):
         """Check for alternate speed mode."""
@@ -826,10 +908,12 @@ class MyRobot(wpilib.SimpleRobot):
                 driver_left_y = driver_left_y * self._driver_controls_swap_ratio
                 self._drive_train.arcade_drive(driver_left_y, driver_right_x,
                                                False)
+                self._aim_at_target_step = -1
         else:
             # Make sure we don't mess with any teleop auto routines
             # if they're running
-            self._drive_train.arcade_drive(0.0, 0.0, False)
+            if self._aim_at_target_step == -1:
+                self._drive_train.arcade_drive(0.0, 0.0, False)
 
     def _control_shooter(self):
         """Manually control the catapult."""
