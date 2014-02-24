@@ -7,9 +7,7 @@
 
 # Imports
 import pytest
-
-import sys,os
-sys.path.append(os.path.realpath('src'))
+import os
 import autoscript
 
 
@@ -40,19 +38,19 @@ class TestAutoScript:
         assert a._command_iterator == None
 
     def test_init_with_valid_file(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
+        a = autoscript.AutoScript(os.path.realpath('test1.as'))
         assert a._commands != None
         assert len(a._commands) == 3
         assert a._command_iterator != None
 
     def test_dispose(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
+        a = autoscript.AutoScript(os.path.realpath('test1.as'))
         a.dispose()
         assert a._commands == None
 
     def test_parse_valid_file(self):
         a = autoscript.AutoScript()
-        commands = a.parse(os.path.realpath('tests/files/test1.as'))
+        commands = a.parse(os.path.realpath('test1.as'))
         assert commands != None
         assert len(commands) == 3
         assert a._command_iterator != None
@@ -64,12 +62,12 @@ class TestAutoScript:
         assert commands[2].parameters == [1.0,'abc',2]
 
     def test_parse_file_not_found(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test_asdfd.as'))
+        a = autoscript.AutoScript(os.path.realpath('test_asdfd.as'))
         assert a._commands == None
         assert a._command_iterator == None
 
     def test_parse_malformed_file(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test2.as'))
+        a = autoscript.AutoScript(os.path.realpath('test2.as'))
         assert a._commands != None
         assert len(a._commands) == 2
         assert a._command_iterator != None
@@ -78,25 +76,31 @@ class TestAutoScript:
         assert a._commands[1].command == 'cmd2'
         assert a._commands[1].parameters == ['',6,'','abc','']
 
+    def test_get_available_scripts_no_files(self):
+        a = autoscript.AutoScript()
+        x = a.get_available_scripts('../')
+        assert x == []
+
     def test_get_available_scripts_no_path(self):
         a = autoscript.AutoScript()
         x = a.get_available_scripts()
-        assert x == []
+        assert x != None
+        assert len(x) > 0
 
     def test_get_available_scripts_with_path_with_slash(self):
         a = autoscript.AutoScript()
-        x = a.get_available_scripts('tests/files/')
+        x = a.get_available_scripts('./')
         assert x != None
         assert len(x) > 0
 
     def test_get_available_scripts_with_path_no_slash(self):
         a = autoscript.AutoScript()
-        x = a.get_available_scripts('tests/files')
+        x = a.get_available_scripts('.')
         assert x != None
         assert len(x) > 0
 
     def test_get_next_command_first_command(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
+        a = autoscript.AutoScript(os.path.realpath('test1.as'))
         c = a.get_next_command()
         assert a._commands != None
         assert len(a._commands) == 3
@@ -106,7 +110,7 @@ class TestAutoScript:
         assert c.parameters == ['p1',2,4.0]
 
     def test_get_next_command_second_command(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
+        a = autoscript.AutoScript(os.path.realpath('test1.as'))
         c1 = a.get_next_command()
         c2 = a.get_next_command()
         assert a._commands != None
@@ -120,7 +124,7 @@ class TestAutoScript:
         assert c2.parameters == [5,1.0,'xyz']
 
     def test_get_next_command_none_left(self):
-        a = autoscript.AutoScript(os.path.realpath('tests/files/test1.as'))
+        a = autoscript.AutoScript(os.path.realpath('test1.as'))
         c1 = a.get_next_command()
         c2 = a.get_next_command()
         c3 = a.get_next_command()
