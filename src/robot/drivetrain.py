@@ -665,14 +665,14 @@ class DriveTrain(object):
 
         return False
 
-    def drive_time(self, time, direction, speed):
+    def drive_time(self, duration, direction, speed):
         """Drives forward/backward for a time duration.
 
         Using a timer, drives the robot forward or backward for a certain time
         duration.
 
         Args:
-            time: the amount of time to drive.
+            duration: the amount of time to drive.
             direction: the direction to drive.
             speed: the motor speed ratio.
 
@@ -687,7 +687,7 @@ class DriveTrain(object):
         elapsed_time = self._movement_timer.elapsed_time_in_secs()
 
         # Calculate time left to move
-        time_left = time - elapsed_time
+        time_left = duration - elapsed_time
 
         # Check if we've reached the time duration
         if time_left < self._time_threshold or time_left < 0:
@@ -879,14 +879,14 @@ class DriveTrain(object):
 
         return False
 
-    def turn_time(self, time, direction, speed):
+    def turn_time(self, duration, direction, speed):
         """Turns the robot left/right for a time duration.
 
         Using a timer, turns the robot left or right for a certain time
         duration.
 
         Args:
-            time: the amount of time to drive.
+            duration: the amount of time to drive.
             direction: the direction to turn.
             speed: the motor speed ratio.
 
@@ -901,7 +901,7 @@ class DriveTrain(object):
         elapsed_time = self._movement_timer.elapsed_time_in_secs()
 
         # Calculate time left to turn
-        time_left = time - elapsed_time
+        time_left = duration - elapsed_time
 
         directional_speed = 0
 
