@@ -6,6 +6,7 @@ class Side(object):
     LEFT = 0
     RIGHT = 1
     UNKNOWN = 2
+    EITHER = 3
 
 
 class Target(object):

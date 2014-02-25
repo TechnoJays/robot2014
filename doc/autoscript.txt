@@ -1,6 +1,7 @@
 auto_script commands:
 
 adjust_heading(adjustment, speed)
+aim_at_nearest()
 aim_at_target(side)
 auto_fire(power_as_percent)
 drive_distance(distance, speed)

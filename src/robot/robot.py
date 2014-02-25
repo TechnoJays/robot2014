@@ -706,6 +706,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Bail if we don't have a target
         if not current_target:
+            self._aim_at_target_step = -1
             return True
 
         # The first step is to turn to face the target
@@ -756,7 +757,8 @@ class MyRobot(wpilib.SimpleRobot):
         # Figure out which target to check, and then check if it's 'hot'
         if side:
             for trg in self._current_targets:
-                if trg.side == side and trg.is_hot:
+                if ((trg.side == side or side == target.Side.EITHER) and
+                    trg.is_hot):
                     return True
         elif desired_target:
             if desired_target.is_hot:
@@ -814,17 +816,25 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Aim at target
         if self._aim_at_target_step > 0:
-            # Make sure we have targets to aim at
-            if len(self._current_targets) > 0:
-                # Sort targets based on which one we're most closely facing
-                self._current_targets = sorted(self._current_targets,
-                                               lambda x: math.fabs(x.angle),
-                                               reverse=False)
-                # Aim at the nearest target
-                if self.aim_at_target(desired_target=self._current_targets[0]):
-                    self._aim_at_target_step = -1
-            else:
+            self.aim_at_nearest()
+
+    def _sort_targets(self):
+        """Sort the targets based on which we're most closely facing."""
+        if len(self._current_targets) > 0:
+            # Sort targets based on which one we're most closely facing
+            self._current_targets = sorted(self._current_targets,
+                                           lambda x: math.fabs(x.angle),
+                                           reverse=False)
+
+    def aim_at_nearest(self):
+        """Turn and drive until we are aiming at the nearest target."""
+        self._sort_targets()
+        if len(self._current_targets) > 0:
+            # Aim at the nearest target
+            if self.aim_at_target(desired_target=self._current_targets[0]):
                 self._aim_at_target_step = -1
+        else:
+            self._aim_at_target_step = -1
 
     def _check_debug_request(self):
         """Print debug info to driver station."""
