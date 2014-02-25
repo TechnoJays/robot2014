@@ -10,6 +10,7 @@ import cv2
 import math
 import numpy as np
 import target
+import urllib2
 
 
 class ContourInfo(object):
@@ -36,8 +37,10 @@ class Targeting(object):
     # TODO: search the rest of the code for constants
 
     # Camera view angle (49 for 1013)
-    CAMERA_URL = ("http://10.0.94.11/axis-cgi/mjpg/video.cgi?resolution=640x480"
-                  "&dummy=param.mjpg")
+    #CAMERA_URL = ("http://10.0.94.11/axis-cgi/mjpg/video.cgi?"
+    #              "resolution=640x480&dummy=param.mjpg")
+    #CAMERA_URL = r"http://10.0.94.11/mjpg/video.mjpg"
+    CAMERA_URL = r"http://10.0.94.11/jpg/image.jpg"
     CAMERA_VIEW_ANGLE = 49
     CAMERA_RES_HEIGHT = 640
     CAMERA_RES_WIDTH = 480
@@ -46,29 +49,48 @@ class Targeting(object):
     RECTANGULARITY_THRESHOLD = 40
     ASPECT_RATIO_THRESHOLD = 55
 
-    _vcap = None
+    #_vcap = None
 
-    def __init__(self):
-        """Create a Targeting object and Video Capture for the camera."""
-        self._vcap = cv2.VideoCapture()
+    #def __init__(self):
+        #"""Create a Targeting object and Video Capture for the camera."""
+        #self._vcap = cv2.VideoCapture()
 
     def open(self):
-        """Try to open the Video Capture object linked to the camera."""
-        return self._vcap.open(self.CAMERA_URL)
+        """Try opening a connection to the camera."""
+        #"""Try to open the Video Capture object linked to the camera."""
+        #return self._vcap.open(self.CAMERA_URL)
+        retval = False
+        try:
+            stream = urllib2.urlopen(self.CAMERA_URL, None, 1)
+            stream.close()
+            retval = True
+        except Exception:
+            pass
+        return retval
 
-    def close(self):
-        """Close the Video Capture object."""
-        self._vcap.release()
+    #def close(self):
+        #"""Close the Video Capture object."""
+        #self._vcap.release()
 
     def get_image(self):
-        """Get the latest frame from the VidCap object."""
-        if self._vcap:
-            result, img = self._vcap.read()
-            if result:
-                return img
-        else:
-            return None
+        """Get the latest frame."""
+        #if self._vcap:
+        #    result, img = self._vcap.read()
+        #    if result:
+        #        return img
+        #else:
+        #    return None
         #return cv2.imread('input.jpg')
+        img = None
+        try:
+            stream = urllib2.urlopen(self.CAMERA_URL, None, 1)
+            data = stream.read()
+            stream.close()
+            img = cv2.imdecode(np.fromstring(data, dtype=np.uint8),
+                               cv2.CV_LOAD_IMAGE_COLOR)
+        except Exception:
+            pass
+        return img
 
     def score_aspect_ratio(self, contour_data):
         """Score the aspect ratio of a contour based on expected sizes."""

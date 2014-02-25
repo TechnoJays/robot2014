@@ -12,6 +12,7 @@ import common
 import datalog
 import parameters
 import stopwatch
+import time
 import ultrasonic
 
 
@@ -456,7 +457,7 @@ class DriveTrain(object):
             self._gyro_angle = self._gyro.GetAngle()
 
         if self.range_finder_enabled:
-            self._range = self._range_finder.get_range_in_feet()
+            self._range = self._range_finder.get_filtered_range_in_feet()
 
         if self.accelerometer_enabled:
             self._acceleration = self._accelerometer.GetAcceleration(
@@ -642,6 +643,10 @@ class DriveTrain(object):
 
         # Check if we've reached the distance
         if math.fabs(distance_left) < self._distance_threshold:
+            # Drive in reverse briefly
+            self._robot_drive.ArcadeDrive(-0.5 * directional_multiplier,
+                                          0.0, False)
+            time.sleep(0.1)
             # Stop driving
             self._robot_drive.ArcadeDrive(0.0, 0.0, False)
             return True

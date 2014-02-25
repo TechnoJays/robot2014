@@ -43,8 +43,8 @@ class ImageProcessor(object):
                     robot_connected = True
                 except KeyboardInterrupt:
                     raise
-                except Exception:
-                    print "Robot connection failed."
+                except Exception as excep:
+                    print "Robot connection failed." + str(excep)
                     self._sock = None
                     robot_connected = False
             # Try to connect to the camera
@@ -84,12 +84,12 @@ class ImageProcessor(object):
                 except Exception as excep:
                     print "Connection error, disconnected: " + str(excep)
                     self._sock.close()
-                    self._targeting.close()
+                    #self._targeting.close()
                     self._sock = None
                     break
                 # Wait before getting new targets
                 # TODO: what should this really be?
-                time.sleep(0.5)
+                time.sleep(0.2)
             # Wait before trying to reconnect
             time.sleep(1)
 

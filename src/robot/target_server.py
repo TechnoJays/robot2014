@@ -39,6 +39,7 @@ class TargetHandler(socketserver.StreamRequestHandler):
         it's FIFO) is removed and the new Target is added.
 
         """
+        print("Connection!")
         # Loop continuously as long as the connection is alive
         while True:
             # Read from the TCP connection until a newline is encountered
@@ -91,11 +92,13 @@ class ImageServer(threading.Thread):
         """Starts a TCP server that listens for Targets."""
         # If the server hasn't been created yet, create it
         if self._server == None:
-            address = ('localhost', self.port)
+            address = ('10.0.94.2', self.port)
             self._server = ServerWithQueue(address, TargetHandler,
                                            self._data_queue)
+        print("Listening for TCP connections..")
         # Serve connections forever (until the robot is turned off)
         self._server.serve_forever()
+        print("Done.")
 
 # This is used for testing on a PC
 #if __name__ == '__main__':

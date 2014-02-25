@@ -6,6 +6,7 @@ try:
     import wpilib
 except ImportError:
     from pyfrc import wpilib
+import time
 
 
 class RangeFinder(object):
@@ -13,6 +14,7 @@ class RangeFinder(object):
 
     _volts_per_inch = None
     _channel = None
+    _range_list = None
 
     def __init__(self, chan):
         # TODO: change hard coded values to come from parameters
@@ -20,6 +22,7 @@ class RangeFinder(object):
         self._channel.SetOversampleBits(4)
         self._channel.SetAverageBits(2)
         self._volts_per_inch = 5 / 512.0
+        self._range_list = []
 
     def get_voltage(self):
         """Get the voltage from the analog channel."""
@@ -35,4 +38,12 @@ class RangeFinder(object):
         """Get the range to the nearest object in feet."""
         rng = self.get_range_in_inches() / 12.0
         return rng
+
+    def get_filtered_range_in_feet(self):
+        """Get the median filtered range in feet."""
+        for range_counter in range(5):
+            self._range_list[range_counter] = self.get_range_in_feet()
+            time.sleep(0.01)
+        self._range_list.sort()
+        return self._range_list[2]
 
