@@ -171,8 +171,8 @@ class MyRobot(wpilib.SimpleRobot):
         self._user_interface_names = dir(self._user_interface)
 
         # Create a queue for transferring Targets from the image server to us
-        # It can only hold 2, since there should only be at most 2 targets found
-        self._target_queue = queue.Queue(2)
+        # Since we pass a List of targets, the size will be 1
+        self._target_queue = queue.Queue(1)
 
         # Create the TCP image server, and start it in a background thread
         self._image_server = target_server.ImageServer(self._target_queue)
@@ -313,14 +313,14 @@ class MyRobot(wpilib.SimpleRobot):
 
         # Get targets in the queue if any exist
         if not self._target_queue.empty():
-            self._current_targets = []
             try:
-                self._current_targets.append(self._target_queue.get(
-                                                                block=False))
-                self._current_targets.append(self._target_queue.get(
-                                                                block=False))
+                self._current_targets = self._target_queue.get(block=False)
+                if (not isinstance(self._current_targets, list) or
+                    (len(self._current_targets) == 1 and
+                     self._current_targets[0].no_targets)):
+                    self._current_targets = []
             except queue.Empty:
-                pass
+                self._current_targets = []
 
         # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
@@ -363,14 +363,14 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
-                self._current_targets = []
                 try:
-                    self._current_targets.append(self._target_queue.get(
-                                                                block=False))
-                    self._current_targets.append(self._target_queue.get(
-                                                                block=False))
+                    self._current_targets = self._target_queue.get(block=False)
+                    if (not isinstance(self._current_targets, list) or
+                        (len(self._current_targets) == 1 and
+                         self._current_targets[0].no_targets)):
+                        self._current_targets = []
                 except queue.Empty:
-                    pass
+                    self._current_targets = []
 
             # Execute autoscript commands
             if not autoscript_finished:
@@ -502,14 +502,14 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
-                self._current_targets = []
                 try:
-                    self._current_targets.append(self._target_queue.get(
-                                                                block=False))
-                    self._current_targets.append(self._target_queue.get(
-                                                                block=False))
+                    self._current_targets = self._target_queue.get(block=False)
+                    if (not isinstance(self._current_targets, list) or
+                        (len(self._current_targets) == 1 and
+                         self._current_targets[0].no_targets)):
+                        self._current_targets = []
                 except queue.Empty:
-                    pass
+                    self._current_targets = []
 
             # Perform tele-auto routines
             self._perform_tele_auto()
@@ -718,7 +718,7 @@ class MyRobot(wpilib.SimpleRobot):
                 adjustment += self._shooting_angle_offset
             elif current_target.side == target.Side.RIGHT:
                 adjustment -= self._shooting_angle_offset
-            if self._drive_train.adjust_heading(adjustment, 1.0):
+            if self._drive_train.adjust_heading(adjustment, 0.7):
                 self._aim_at_target_step = 2
         # Step 2 is to drive until we're at the optimum distance to shoot
         elif self._aim_at_target_step == 2:
@@ -820,10 +820,10 @@ class MyRobot(wpilib.SimpleRobot):
 
     def _sort_targets(self):
         """Sort the targets based on which we're most closely facing."""
-        if len(self._current_targets) > 0:
+        if len(self._current_targets) > 1:
             # Sort targets based on which one we're most closely facing
             self._current_targets = sorted(self._current_targets,
-                                           lambda x: math.fabs(x.angle),
+                                           key=lambda x: math.fabs(x.angle),
                                            reverse=False)
 
     def aim_at_nearest(self):

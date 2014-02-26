@@ -16,6 +16,7 @@ class Target(object):
     angle = None
     is_hot = False
     confidence = None
+    no_targets = False
 
     def __init__(self, **values):
         """Create a target using a dictionary.
@@ -32,3 +33,4 @@ class Target(object):
             self.angle = None
             self.is_hot = None
             self.confidence = None
+            self.no_targets = False

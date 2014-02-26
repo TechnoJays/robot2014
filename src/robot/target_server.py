@@ -45,36 +45,38 @@ class TargetHandler(socketserver.StreamRequestHandler):
             # Read from the TCP connection until a newline is encountered
             # We append a newline in the TCP client whenever a JSON message
             # is sent.
-            json_dict = None
-            new_target = None
+            json_data = None
+            new_targets = []
             data = str(self.rfile.readline(), "utf-8")
             # If we failed to read data, close the connection
             if not data:
                 break
-            # Try to convert the JSON string to a dictionary
+            # Try to convert the JSON string to Python types (List of Dicts)
             try:
-                json_dict = json.loads(data.strip())
+                json_data = json.loads(data.strip())
             except ValueError:
                 pass
             except TypeError:
                 pass
-            # If the JSON was parsed, create a Target object from it
-            if json_dict:
-                # Here we use ** to pass a dictionary containing all keyword
-                # arguments. It isn't the best, but I don't know of a better
-                # method for easily populating an object's properties using a
-                # dictionary.
-                try:
-                    new_target = target.Target(**json_dict)
-                except TypeError:
-                    pass
-            # If everything went well, we have a new Target object
-            if new_target:
-                # Add the Target to the queue. If the queue is full, remove the
+            # If the JSON was parsed, create Target objects from it
+            if json_data:
+                for json_dict in json_data:
+                    # Here we use ** to pass a dictionary containing all keyword
+                    # arguments. It isn't the best, but I don't know of a better
+                    # method for easily populating an object's properties using a
+                    # dictionary.
+                    try:
+                        current_target = target.Target(**json_dict)
+                        new_targets.append(current_target)
+                    except TypeError:
+                        pass
+            # If everything went well, we have new Target object(s)
+            if new_targets and len(new_targets) > 0:
+                # Add Targets to the queue. If the queue is full, remove the
                 # oldest element (since it's FIFO, just do a get()).
                 if self.server.data_queue.full():
                     self.server.data_queue.get()
-                self.server.data_queue.put(new_target)
+                self.server.data_queue.put(new_targets)
             time.sleep(0.1)
 
 
@@ -102,7 +104,7 @@ class ImageServer(threading.Thread):
 
 # This is used for testing on a PC
 #if __name__ == '__main__':
-#    data_queue = queue.Queue(2)
+#    data_queue = queue.Queue(1)
 #    serv = ImageServer(data_queue)
 #    serv.start()
 

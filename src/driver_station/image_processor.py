@@ -69,15 +69,19 @@ class ImageProcessor(object):
                     # Get an image from the webcam and process it into a List of
                     # Targets
                     targets = self._targeting.get_targets()
-                    # Convert each Target to JSON and send it to the robot
-                    for current_target in targets:
-                        data = json_helper.to_json(current_target)
-                        print "Sending: " + str(data)
-                        if data:
-                            # Python3
-                            #self._sock.send(bytes(data + '\n', "utf-8"))
-                            # Python2
-                            self._sock.send(bytes(data + '\n'))
+                    # If there weren't any targets, create a 'no targets' object
+                    if len(targets) <= 0:
+                        no_target = target.Target()
+                        no_target.no_targets = True
+                        targets.append(no_target)
+                    # Convert Target list to JSON and send it to the robot
+                    data = json_helper.to_json(targets)
+                    print "Sending: " + str(data)
+                    if data:
+                        # Python3
+                        #self._sock.send(bytes(data + '\n', "utf-8"))
+                        # Python2
+                        self._sock.send(bytes(data + '\n'))
                 # If anything fails, bail out and try to reconnect
                 except KeyboardInterrupt:
                     raise
