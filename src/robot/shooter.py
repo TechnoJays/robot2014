@@ -381,7 +381,7 @@ class Shooter(object):
             A string with the encoder value
 
         """
-        return '%(enc)3.0f' % {'enc':self._encoder_count}
+        return 'Encoder: %(enc)3.0f' % {'enc':self._encoder_count}
 
     def log_current_state(self):
         """Log sensor and status variables."""

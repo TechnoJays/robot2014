@@ -495,7 +495,7 @@ class DriveTrain(object):
         #return '%(gyro)3.0f %(acc)3.2f %(dis)2.1f' % {'gyro':self._gyro_angle,
         #        'acc':self._acceleration,
         #                'dis':self._distance_traveled}
-        return '%(gyro)3.0f %(rng)4.1f' % {'gyro':self._gyro_angle,
+        return 'Gyro: %(gyro)3.0f Rng: %(rng)4.1f' % {'gyro':self._gyro_angle,
                 'rng':self._range}
 
     def log_current_state(self):

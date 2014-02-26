@@ -360,6 +360,7 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             self._read_sensors()
             self._print_range()
+            self._print_targets()
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
@@ -524,6 +525,7 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Print the range and check for other print timeouts
                 self._print_range()
+                self._print_targets()
                 self._check_ui_print_timeout()
 
                 # Check swap drivetrain direction request
@@ -847,24 +849,15 @@ class MyRobot(wpilib.SimpleRobot):
             # Disable the range to object prints briefly
             self._disable_range_print = True
             self._range_print_timer.start()
-            self._user_interface.output_user_message("Diagnostics",
-                                                     True)
             if self._drive_train:
                 self._drive_train.log_current_state()
                 state = self._drive_train.get_current_state()
-                self._user_interface.output_user_message(state, False)
+                self._user_interface.output_user_message(state, True)
             if self._shooter:
                 self._shooter.log_current_state()
                 state = self._shooter.get_current_state()
                 self._user_interface.output_user_message(state, False)
-            if len(self._current_targets) > 0:
-                for trg in self._current_targets:
-                    message = "%(dis)4.1f, %(ang)4.1f" % {'dis':trg.distance,
-                                                          'ang':trg.angle}
-                    self._user_interface.output_user_message(message, False)
-                    message = "%(hot)s, %(side)1.0f" % {'hot':str(trg.is_hot),
-                                                        'side':trg.side}
-                    self._user_interface.output_user_message(message, False)
+            self._print_targets()
 
     def _print_range(self):
         """Print the range to the nearest object."""
@@ -876,6 +869,16 @@ class MyRobot(wpilib.SimpleRobot):
                                                          {'rng':rng},
                                                          True)
 
+    def _print_targets(self):
+        if len(self._current_targets) > 0:
+            for trg in self._current_targets:
+                message = "Dis: %(dis)4.1f Ang: %(ang)4.1f" % {'dis':trg.distance,
+                                                      'ang':trg.angle}
+                self._user_interface.output_user_message(message, False)
+                message = "Hot: %(hot)s Side: %(side)1.0f" % {'hot':str(trg.is_hot),
+                                                    'side':trg.side}
+                self._user_interface.output_user_message(message, False)
+
     def _check_ui_print_timeout(self):
         """Show any non-range message on the screen for 2 seconds."""
         # If we're currently suppressing the range prints, check if the timeout
@@ -883,7 +886,7 @@ class MyRobot(wpilib.SimpleRobot):
         if self._disable_range_print:
             elapsed_time = self._range_print_timer.elapsed_time_in_secs()
             # TODO: this should be a parameter
-            if elapsed_time > 2.0:
+            if elapsed_time > 3.0:
                 self._range_print_timer.stop()
                 self._disable_range_print = False
 
