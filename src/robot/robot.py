@@ -312,8 +312,8 @@ class MyRobot(wpilib.SimpleRobot):
         self.GetWatchdog().SetEnabled(False)
 
         # Get targets in the queue if any exist
-        self._current_targets = []
         if not self._target_queue.empty():
+            self._current_targets = []
             try:
                 self._current_targets.append(self._target_queue.get(
                                                                 block=False))
@@ -362,8 +362,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._print_range()
 
             # Get targets in the queue if any exist
-            self._current_targets = []
             if not self._target_queue.empty():
+                self._current_targets = []
                 try:
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))
@@ -501,8 +501,8 @@ class MyRobot(wpilib.SimpleRobot):
             self._read_sensors()
 
             # Get targets in the queue if any exist
-            self._current_targets = []
             if not self._target_queue.empty():
+                self._current_targets = []
                 try:
                     self._current_targets.append(self._target_queue.get(
                                                                 block=False))

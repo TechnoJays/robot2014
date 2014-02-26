@@ -20,7 +20,7 @@ class RangeFinder(object):
         # TODO: change hard coded values to come from parameters
         self._channel = wpilib.AnalogChannel(chan)
         self._channel.SetOversampleBits(4)
-        self._channel.SetAverageBits(2)
+        self._channel.SetAverageBits(4)
         self._volts_per_inch = 5 / 512.0
         self._range_list = []
 
@@ -41,9 +41,12 @@ class RangeFinder(object):
 
     def get_filtered_range_in_feet(self):
         """Get the median filtered range in feet."""
-        for range_counter in range(5):
-            self._range_list[range_counter] = self.get_range_in_feet()
-            time.sleep(0.01)
-        self._range_list.sort()
-        return self._range_list[2]
+        current_range = self.get_range_in_feet()
+        if current_range > 1.0:
+            if len(self._range_list) >= 21:
+                self._range_list.pop(0)
+            self._range_list.append(current_range)
+        sorted_ranges = list(self._range_list)
+        sorted_ranges.sort()
+        return sorted_ranges[len(sorted_ranges)-1]
 

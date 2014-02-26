@@ -83,7 +83,8 @@ class ImageProcessor(object):
                     raise
                 except Exception as excep:
                     print "Connection error, disconnected: " + str(excep)
-                    self._sock.close()
+                    if self._sock:
+                        self._sock.close()
                     #self._targeting.close()
                     self._sock = None
                     break

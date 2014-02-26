@@ -150,7 +150,7 @@ class Targeting(object):
     def get_targets(self):
         """Get an image, search it for targets, and return a list of Targets."""
         img = self.get_image()
-        if not img:
+        if img == None:
             return []
 
         # Convert to HSV
