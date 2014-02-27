@@ -8,6 +8,7 @@ DO NOT UPLOAD TO THE ROBOT!!
 
 import json_helper
 import socket
+import target
 import targeting
 import time
 
