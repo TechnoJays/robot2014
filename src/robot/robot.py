@@ -360,7 +360,7 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             self._read_sensors()
             self._print_range()
-            self._print_targets()
+            #self._print_targets()
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
@@ -525,7 +525,7 @@ class MyRobot(wpilib.SimpleRobot):
 
                 # Print the range and check for other print timeouts
                 self._print_range()
-                self._print_targets()
+                #self._print_targets()
                 self._check_ui_print_timeout()
 
                 # Check swap drivetrain direction request
