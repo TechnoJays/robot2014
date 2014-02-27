@@ -198,7 +198,7 @@ class Targeting(object):
             center_x = rect_x + (rect_w / 2)
             center_y = rect_y + (rect_h / 2)
             current_contour.center_mass = (center_x, center_y)
-            ratio = math.fabs(1.0 - ((rect_w * 1.0) / rect_h))
+            ratio = (rect_w * 1.0) / rect_h
             if ratio > 1.0:
                 current_contour.is_vertical = False
             else:
