@@ -628,6 +628,7 @@ class MyRobot(wpilib.SimpleRobot):
             self._user_interface.button_state_changed(
                         userinterface.UserControllers.DRIVER,
                         userinterface.JoystickButtons.Y)):
+            self._drive_train.reset_sensors()
             self._aim_at_target_step = 1
         # Press left bumper to pass over the truss
         if (self._user_interface.get_button_state(
@@ -720,7 +721,7 @@ class MyRobot(wpilib.SimpleRobot):
                 adjustment += self._shooting_angle_offset
             elif current_target.side == target.Side.RIGHT:
                 adjustment -= self._shooting_angle_offset
-            if self._drive_train.adjust_heading(adjustment, 0.7):
+            if self._drive_train.adjust_heading(adjustment, 0.55):
                 self._aim_at_target_step = 2
         # Step 2 is to drive until we're at the optimum distance to shoot
         elif self._aim_at_target_step == 2:
@@ -738,7 +739,7 @@ class MyRobot(wpilib.SimpleRobot):
             if self._drive_train.drive_to_range(self._optimum_shooting_range,
                                                 1.0):
                 self._aim_at_target_step = -1
-            return True
+                return True
 
         return False
 
