@@ -93,7 +93,7 @@ class DataLog(object):
             current_time = str(time.time())
             self._fo.write("%s" % current_time)
         else:
-            self._fo.write("   %s/n" % self._line)
+            self._fo.write("   %s\n" % self._line)
 
     def write_value(self, parameter, value, timestamp=False):
         """Writes the parameter and value to the open text file
@@ -106,5 +106,5 @@ class DataLog(object):
             current_time = str(time.time())
             self._fo.write("%s" % current_time)
         else:
-            self._fo.write("   %s = %s/n" % (parameter, value))
+            self._fo.write("   %s = %s\n" % (parameter, value))
 
