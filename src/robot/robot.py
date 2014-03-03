@@ -668,7 +668,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter_setup_step = 3
                 return False
             elif self._shooter_setup_step == 3:
-                if self._shooter.shoot_time(1.5, common.Direction.DOWN, 0.7):
+                if self._shooter.shoot_time(1.5, common.Direction.DOWN, 0.8):
                     self._shooter_setup_step = 4
                 return False
             elif self._shooter_setup_step == 4:
