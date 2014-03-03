@@ -261,6 +261,7 @@ class Targeting(object):
         targets = []
         for v_contour_data in matched_contours_data:
             current_target = target.Target()
+            current_target.no_targets = False
             current_target.angle = self.calculate_angle(v_contour_data)
             current_target.distance = self.calculate_distance(v_contour_data)
             if v_contour_data.paired_horizontal_contour_data:

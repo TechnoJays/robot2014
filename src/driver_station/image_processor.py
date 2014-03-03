@@ -70,6 +70,8 @@ class ImageProcessor(object):
                     # Get an image from the webcam and process it into a List of
                     # Targets
                     targets = self._targeting.get_targets()
+                    if not targets:
+                        targets = []
                     # If there weren't any targets, create a 'no targets' object
                     if len(targets) <= 0:
                         no_target = target.Target()

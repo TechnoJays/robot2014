@@ -1,6 +1,7 @@
 """This module provides a image targeting server."""
 
 import json
+import queue
 import socketserver
 import threading
 import target
@@ -47,7 +48,10 @@ class TargetHandler(socketserver.StreamRequestHandler):
             # is sent.
             json_data = None
             new_targets = []
-            data = str(self.rfile.readline(), "utf-8")
+            try:
+                data = str(self.rfile.readline(), "utf-8")
+            except Exception:
+                break
             # If we failed to read data, close the connection
             if not data:
                 break
@@ -59,7 +63,7 @@ class TargetHandler(socketserver.StreamRequestHandler):
             except TypeError:
                 pass
             # If the JSON was parsed, create Target objects from it
-            if json_data:
+            if json_data and isinstance(json_data, list):
                 for json_dict in json_data:
                     # Here we use ** to pass a dictionary containing all keyword
                     # arguments. It isn't the best, but I don't know of a better
@@ -75,8 +79,14 @@ class TargetHandler(socketserver.StreamRequestHandler):
                 # Add Targets to the queue. If the queue is full, remove the
                 # oldest element (since it's FIFO, just do a get()).
                 if self.server.data_queue.full():
-                    self.server.data_queue.get()
-                self.server.data_queue.put(new_targets)
+                    try:
+                        self.server.data_queue.get()
+                    except queue.Empty:
+                        pass
+                try:
+                    self.server.data_queue.put(new_targets)
+                except queue.Full:
+                    pass
             time.sleep(0.1)
 
 
@@ -100,7 +110,6 @@ class ImageServer(threading.Thread):
         print("Listening for TCP connections..")
         # Serve connections forever (until the robot is turned off)
         self._server.serve_forever()
-        print("Done.")
 
 # This is used for testing on a PC
 #if __name__ == '__main__':

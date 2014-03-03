@@ -135,7 +135,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._aim_at_target_step = -1
         self._disable_range_print = False
         self._target_queue = None
-        self._current_targets = None
+        self._current_targets = []
 
         # Enable logging if specified
         if logging_enabled:
@@ -315,7 +315,8 @@ class MyRobot(wpilib.SimpleRobot):
         if not self._target_queue.empty():
             try:
                 self._current_targets = self._target_queue.get(block=False)
-                if (not isinstance(self._current_targets, list) or
+                if (not self._current_targets or
+                    not isinstance(self._current_targets, list) or
                     (len(self._current_targets) == 1 and
                      self._current_targets[0].no_targets)):
                     self._current_targets = []
@@ -366,7 +367,8 @@ class MyRobot(wpilib.SimpleRobot):
             if not self._target_queue.empty():
                 try:
                     self._current_targets = self._target_queue.get(block=False)
-                    if (not isinstance(self._current_targets, list) or
+                    if (not self._current_targets or
+                        not isinstance(self._current_targets, list) or
                         (len(self._current_targets) == 1 and
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
@@ -505,7 +507,8 @@ class MyRobot(wpilib.SimpleRobot):
             if not self._target_queue.empty():
                 try:
                     self._current_targets = self._target_queue.get(block=False)
-                    if (not isinstance(self._current_targets, list) or
+                    if (not self._current_targets or
+                        not isinstance(self._current_targets, list) or
                         (len(self._current_targets) == 1 and
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
