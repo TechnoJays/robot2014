@@ -10,14 +10,16 @@ except ImportError:
 
 import autoscript
 import common
-import datalog
+#import datalog
 import drivetrain
 import feeder
+import logging
 import math
 import parameters
 import queue
 import shooter
 import stopwatch
+import sys
 import target
 import target_server
 import userinterface
@@ -39,6 +41,7 @@ class MyRobot(wpilib.SimpleRobot):
     _drive_train = None
     _feeder = None
     _log = None
+    _logger = None
     _parameters = None
     _shooter = None
     _image_server = None
@@ -93,6 +96,16 @@ class MyRobot(wpilib.SimpleRobot):
             logging_enabled: True if logging should be enabled.
 
         """
+        self._logger = logging.getLogger(__name__)
+        handler = None
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
+                                      '%(name)s:%(message)s')
+        handler = logging.StreamHandler(stream=sys.stdout)
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(formatter)
+        self._logger.addHandler(handler)
+        self._logger.setLevel(logging.INFO)
+
         # Initialize public member variables
 
         # Initialize private member objects
@@ -138,12 +151,12 @@ class MyRobot(wpilib.SimpleRobot):
         self._current_targets = []
 
         # Enable logging if specified
-        if logging_enabled:
+        #if logging_enabled:
             # Create a new data log object
-            self._log = datalog.DataLog("robot.log")
+            #self._log = datalog.DataLog("robot.log")
 
-            if self._log and self._log.file_opened:
-                self._log_enabled = True
+            #if self._log and self._log.file_opened:
+                #self._log_enabled = True
 
         self._timer = stopwatch.Stopwatch()
         self._range_print_timer = stopwatch.Stopwatch()
@@ -321,7 +334,9 @@ class MyRobot(wpilib.SimpleRobot):
                      self._current_targets[0].no_targets)):
                     self._current_targets = []
             except queue.Empty:
+                self._logger.warn("Target queue is empty")
                 self._current_targets = []
+            self._logger.debug("Targets: " + str(self._current_targets))
 
         # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
@@ -373,7 +388,9 @@ class MyRobot(wpilib.SimpleRobot):
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
                 except queue.Empty:
+                    self._logger.warn("Target queue is empty")
                     self._current_targets = []
+                self._logger.debug("Targets: " + str(self._current_targets))
 
             # Execute autoscript commands
             if not autoscript_finished:
@@ -513,7 +530,9 @@ class MyRobot(wpilib.SimpleRobot):
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
                 except queue.Empty:
+                    self._logger.warn("Target queue is empty")
                     self._current_targets = []
+                self._logger.debug("Targets: " + str(self._current_targets))
 
             # Perform tele-auto routines
             self._perform_tele_auto()
@@ -876,10 +895,12 @@ class MyRobot(wpilib.SimpleRobot):
     def _print_targets(self):
         if len(self._current_targets) > 0:
             for trg in self._current_targets:
-                message = "Dis: %(dis)4.1f Ang: %(ang)4.1f" % {'dis':trg.distance,
+                message = "Dis: %(dis)4.1f Ang: %(ang)4.1f" % {
+                                                      'dis':trg.distance,
                                                       'ang':trg.angle}
                 self._user_interface.output_user_message(message, False)
-                message = "Hot: %(hot)s Side: %(side)1.0f" % {'hot':str(trg.is_hot),
+                message = "Hot: %(hot)s Side: %(side)1.0f" % {
+                                                    'hot':str(trg.is_hot),
                                                     'side':trg.side}
                 self._user_interface.output_user_message(message, False)
 

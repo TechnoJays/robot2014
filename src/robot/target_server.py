@@ -1,8 +1,10 @@
 """This module provides a image targeting server."""
 
 import json
+import logging
 import queue
 import socketserver
+import sys
 import threading
 import target
 import time
@@ -30,6 +32,8 @@ class ServerWithQueue(socketserver.TCPServer):
 class TargetHandler(socketserver.StreamRequestHandler):
     """Describes a connection handler for Target objects."""
 
+    _logger = None
+
     def handle(self):
         """Handle incoming connections.
 
@@ -40,7 +44,17 @@ class TargetHandler(socketserver.StreamRequestHandler):
         it's FIFO) is removed and the new Target is added.
 
         """
-        print("Connection!")
+        self._logger = logging.getLogger(__name__)
+        handler = None
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
+                                      '%(name)s:%(message)s')
+        handler = logging.StreamHandler(stream=sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
+        self._logger.addHandler(handler)
+        self._logger.setLevel(logging.DEBUG)
+
+        self._logger.info("Connected.")
         # Loop continuously as long as the connection is alive
         while True:
             # Read from the TCP connection until a newline is encountered
@@ -50,18 +64,21 @@ class TargetHandler(socketserver.StreamRequestHandler):
             new_targets = []
             try:
                 data = str(self.rfile.readline(), "utf-8")
-            except Exception:
+            except Exception as excep:
+                self._logger.error("Exception reading from stream: " +
+                                   str(excep))
                 break
             # If we failed to read data, close the connection
             if not data:
+                self._logger.warn("Could not read data, closing connection.")
                 break
             # Try to convert the JSON string to Python types (List of Dicts)
             try:
                 json_data = json.loads(data.strip())
             except ValueError:
-                pass
+                self._logger.warn("ValueError while parsing JSON")
             except TypeError:
-                pass
+                self._logger.warn("TypeError while parsing JSON")
             # If the JSON was parsed, create Target objects from it
             if json_data and isinstance(json_data, list):
                 for json_dict in json_data:
@@ -73,7 +90,7 @@ class TargetHandler(socketserver.StreamRequestHandler):
                         current_target = target.Target(**json_dict)
                         new_targets.append(current_target)
                     except TypeError:
-                        pass
+                        self._logger.warn("TypeError while creating Target obj")
             # If everything went well, we have new Target object(s)
             if new_targets and len(new_targets) > 0:
                 # Add Targets to the queue. If the queue is full, remove the
@@ -82,19 +99,30 @@ class TargetHandler(socketserver.StreamRequestHandler):
                     try:
                         self.server.data_queue.get()
                     except queue.Empty:
-                        pass
+                        self._logger.warn("Queue is empty")
                 try:
                     self.server.data_queue.put(new_targets)
                 except queue.Full:
-                    pass
+                    self._logger.warn("Queue is full")
             time.sleep(0.1)
 
 
 class ImageServer(threading.Thread):
     """A TCP server that runs in a background thread to receive Targets."""
 
+    _logger = None
+
     def __init__(self, data_queue, port=1180):
         """Initialize a background thread for receiving Targets over TCP."""
+        self._logger = logging.getLogger(__name__)
+        handler = None
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
+                                      '%(name)s:%(message)s')
+        handler = logging.StreamHandler(stream=sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
+        self._logger.addHandler(handler)
+        self._logger.setLevel(logging.DEBUG)
         self.port = port
         self._server = None
         self._data_queue = data_queue
@@ -107,7 +135,7 @@ class ImageServer(threading.Thread):
             address = ('10.0.94.2', self.port)
             self._server = ServerWithQueue(address, TargetHandler,
                                            self._data_queue)
-        print("Listening for TCP connections..")
+        self._logger.info("Listening for TCP connections..")
         # Serve connections forever (until the robot is turned off)
         self._server.serve_forever()
 

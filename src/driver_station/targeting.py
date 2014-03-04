@@ -7,8 +7,10 @@ DO NOT UPLOAD TO THE ROBOT!!
 """
 
 import cv2
+import logging
 import math
 import numpy as np
+import sys
 import target
 import urllib2
 
@@ -49,11 +51,27 @@ class Targeting(object):
     RECTANGULARITY_THRESHOLD = 40
     ASPECT_RATIO_THRESHOLD = 55
 
+    _logger = None
+
     #_vcap = None
 
     #def __init__(self):
         #"""Create a Targeting object and Video Capture for the camera."""
         #self._vcap = cv2.VideoCapture()
+
+    def __init__(self, log_handler=None):
+        self._logger = logging.getLogger(__name__)
+        handler = None
+        if log_handler:
+            handler = log_handler
+        else:
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
+                                          '%(name)s:%(message)s')
+            handler = logging.StreamHandler(stream=sys.stdout)
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(formatter)
+        self._logger.addHandler(handler)
+        self._logger.setLevel(logging.DEBUG)
 
     def open(self):
         """Try opening a connection to the camera."""
@@ -64,8 +82,8 @@ class Targeting(object):
             stream = urllib2.urlopen(self.CAMERA_URL, None, 1)
             stream.close()
             retval = True
-        except Exception:
-            pass
+        except Exception as excep:
+            self._logger.error("Exception connecting to camera: " + str(excep))
         return retval
 
     #def close(self):
@@ -88,8 +106,8 @@ class Targeting(object):
             stream.close()
             img = cv2.imdecode(np.fromstring(data, dtype=np.uint8),
                                cv2.CV_LOAD_IMAGE_COLOR)
-        except Exception:
-            pass
+        except Exception as excep:
+            self._logger.error("Exception getting image: " + str(excep))
         return img
 
     def score_aspect_ratio(self, contour_data):
@@ -131,7 +149,7 @@ class Targeting(object):
                        (height * 12 * 2 *
                         math.tan(self.CAMERA_VIEW_ANGLE * math.pi / (180 * 2))))
         except Exception as excep:
-            print str(excep)
+            self._logger.error("Exception calculating distance: " + str(excep))
         return distance
 
     def calculate_angle(self, v_contour_data):

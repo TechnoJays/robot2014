@@ -7,7 +7,9 @@ DO NOT UPLOAD TO THE ROBOT!!
 """
 
 import json_helper
+import logging
 import socket
+import sys
 import target
 import targeting
 import time
@@ -16,10 +18,24 @@ import time
 class ImageProcessor(object):
     """Gets targets and sends them to a tcp server."""
 
+    _logger = None
     _targeting = None
 
-    def __init__(self, port=1180):
+    def __init__(self, port=1180, log_handler=None):
         """Initialize the image processor."""
+        self._logger = logging.getLogger(__name__)
+        handler = None
+        if log_handler:
+            handler = log_handler
+        else:
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
+                                          '%(name)s:%(message)s')
+            handler = logging.StreamHandler(stream=sys.stdout)
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(formatter)
+        self._logger.addHandler(handler)
+        self._logger.setLevel(logging.DEBUG)
+
         self.port = port
         self._sock = None
         self._targeting = targeting.Targeting()
@@ -33,7 +49,7 @@ class ImageProcessor(object):
             # Try to connect to the robot
             if not robot_connected:
                 try:
-                    print "Attempting to connect to robot..."
+                    self._logger.info("Attempting to connect to robot...")
                     if self._sock == None:
                         # Create a socket (SOCK_STREAM means a TCP socket)
                         self._sock = socket.socket(socket.AF_INET,
@@ -45,24 +61,24 @@ class ImageProcessor(object):
                 except KeyboardInterrupt:
                     raise
                 except Exception as excep:
-                    print "Robot connection failed." + str(excep)
+                    self._logger.warn("Robot connection failed: " + str(excep))
                     self._sock = None
                     robot_connected = False
             # Try to connect to the camera
             if not camera_connected:
-                print "Attempting to connect to the camera..."
+                self._logger.info("Attempting to connect to the camera...")
                 if not self._targeting.open():
-                    print "Camera connection failed."
+                    self._logger.warn("Camera connection failed.")
                     camera_connected = False
                 else:
                     camera_connected = True
             # If one of the two isn't connected, we can't continue yet
             if not camera_connected or not robot_connected:
-                print "Retrying in 5 seconds."
+                self._logger.info("Retrying in 5 seconds.")
                 time.sleep(5)
                 continue
             # Both connections are active; time to get to work
-            print "Connected to both! Processing targets..."
+            self._logger.info("Connected to both! Processing targets...")
             # Loop as long as we're connected
             while True:
                 try:
@@ -71,15 +87,17 @@ class ImageProcessor(object):
                     # Targets
                     targets = self._targeting.get_targets()
                     if not targets:
+                        self._logger.debug("Got None from get_targets()")
                         targets = []
                     # If there weren't any targets, create a 'no targets' object
                     if len(targets) <= 0:
+                        self._logger.debug("No targets found.")
                         no_target = target.Target()
                         no_target.no_targets = True
                         targets.append(no_target)
                     # Convert Target list to JSON and send it to the robot
                     data = json_helper.to_json(targets)
-                    print "Sending: " + str(data)
+                    self._logger.debug("Sending: " + str(data))
                     if data:
                         # Python3
                         #self._sock.send(bytes(data + '\n', "utf-8"))
@@ -89,14 +107,14 @@ class ImageProcessor(object):
                 except KeyboardInterrupt:
                     raise
                 except Exception as excep:
-                    print "Connection error, disconnected: " + str(excep)
+                    self._logger.error("Connection error, disconnected: " +
+                                       str(excep))
                     if self._sock:
                         self._sock.close()
                     #self._targeting.close()
                     self._sock = None
                     break
                 # Wait before getting new targets
-                # TODO: what should this really be?
                 time.sleep(0.2)
             # Wait before trying to reconnect
             time.sleep(1)
