@@ -341,11 +341,8 @@ class MyRobot(wpilib.SimpleRobot):
         # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
 
-        # Perform the shooter setup
+        # Prepare to perform the shooter setup
         self._shooter_setup_step = 1
-        while (self.IsAutonomous() and self.IsEnabled() and
-               not self._shooter_setup()):
-            wpilib.Wait(0.01)
 
     def Autonomous(self):
         """Controls the robot during Autonomous mode.
@@ -403,6 +400,8 @@ class MyRobot(wpilib.SimpleRobot):
                         current_command_complete = \
                                 method(*current_command.parameters)
                     except TypeError:
+                        self._logger.warn("TypeError running autoscript"
+                                    " command: " + str(current_command.command))
                         current_command_complete = True
 
                 # Move on to the next command when the current is finished
@@ -433,6 +432,8 @@ class MyRobot(wpilib.SimpleRobot):
                                 try:
                                     reset()
                                 except TypeError:
+                                    self._logger.warn("TypeError running "
+                                                      "autoscript timer reset")
                                     current_command_complete = True
                             else:
                                 current_command_complete = True
@@ -486,7 +487,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if method and not callable(method):
                     method = None
             except AttributeError:
-                pass
+                self._logger.warn("AttributeError getting method pointer")
 
         return calling_object, method
 
@@ -661,7 +662,7 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.JoystickButtons.LEFTBUMPER)):
             self._truss_pass_step = 1
 
-    def _shooter_setup(self):
+    def shooter_setup(self):
         """Get the shooter into a workable state.
 
         This is because the shooter starts with the arm UP, so the encoder
@@ -681,23 +682,23 @@ class MyRobot(wpilib.SimpleRobot):
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_feeder_position(
                                             self._current_feeder_position)
-                    wpilib.Wait(0.2)
                 self._shooter_setup_step = 2
-                return False
             elif self._shooter_setup_step == 2:
                 self._shooter.ignore_encoder_limits(True)
                 self._shooter.reset_and_start_timer()
                 self._shooter_setup_step = 3
-                return False
             elif self._shooter_setup_step == 3:
                 if self._shooter.shoot_time(1.5, common.Direction.DOWN, 0.8):
                     self._shooter_setup_step = 4
-                return False
             elif self._shooter_setup_step == 4:
                 self._shooter.reset_sensors()
                 self._shooter.ignore_encoder_limits(False)
                 self._shooter_setup_step = -1
-        return True
+                return True
+        else:
+            return True
+
+        return False
 
     def aim_at_target(self, side=None, desired_target=None):
         """Turn and drive until we are aiming at a target.
