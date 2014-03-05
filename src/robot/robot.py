@@ -75,6 +75,7 @@ class MyRobot(wpilib.SimpleRobot):
     _hold_to_shoot_power_factor = 0.0
     _shooter_setup_step = -1
     _aim_at_target_step = -1
+    _aim_at_target_target = None
     _disable_range_print = False
     _robot_names = None
     _drive_train_names = None
@@ -146,6 +147,7 @@ class MyRobot(wpilib.SimpleRobot):
         self._hold_to_shoot_power_factor = 0.0
         self._shooter_setup_step = -1
         self._aim_at_target_step = -1
+        self._aim_at_target_target = None
         self._disable_range_print = False
         self._target_queue = None
         self._current_targets = []
@@ -344,6 +346,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
+        self._aim_at_target_target = None
 
         # Prepare to perform the shooter setup
         self._shooter_setup_step = 1
@@ -663,6 +666,7 @@ class MyRobot(wpilib.SimpleRobot):
                         userinterface.JoystickButtons.Y)):
             self._drive_train.reset_sensors()
             self._aim_at_target_step = 1
+            self._aim_at_target_target = None
         # Press left bumper to pass over the truss
         if (self._user_interface.get_button_state(
                         userinterface.UserControllers.SCORING,
@@ -746,8 +750,30 @@ class MyRobot(wpilib.SimpleRobot):
             self._aim_at_target_step = -1
             return True
 
-        # The first step is to turn to face the target
+        # Step 1 is to drive until we're at the optimum distance to shoot
         if self._aim_at_target_step == 1:
+            # Use camera target distance instead of range finder
+            distance_left = (current_target.distance -
+                             self._optimum_shooting_range)
+            # If we're within tolerance of the distance, stop the motors
+            # and restart the drive train timer to drive backwards briefly
+            if math.fabs(distance_left) < 0.5:
+                self._drive_train.arcade_drive(0.0, 0.0, False)
+                self._drive_train.reset_and_start_timer()
+                self._aim_at_target_step = 2
+            else:
+                direction = common.Direction.FORWARD if distance_left > 0 \
+                    else common.Direction.BACKWARD
+                directional_speed = direction * 0.5
+                self._drive_train.arcade_drive(directional_speed, 0.0, False)
+        # Step 2 is to drive backwards briefly to stop the robot
+        elif self._aim_at_target_step == 2:
+            if self._drive_train.drive_time(0.1, common.Direction.BACKWARD,
+                                            0.5):
+                self._drive_train.reset_sensors()
+                self._aim_at_target_step = 3
+        # Step 3 is to turn to face the target
+        elif self._aim_at_target_step == 3:
             # Include an offset. This is required since the image targets aren't
             # exactly where we want to aim (they're to the outside of the goals)
             adjustment = current_target.angle
@@ -756,23 +782,6 @@ class MyRobot(wpilib.SimpleRobot):
             elif current_target.side == target.Side.RIGHT:
                 adjustment -= self._shooting_angle_offset
             if self._drive_train.adjust_heading(adjustment, 0.5):
-                self._aim_at_target_step = 2
-        # Step 2 is to drive until we're at the optimum distance to shoot
-        elif self._aim_at_target_step == 2:
-            # Alternative method is to use camera target distance
-            distance_left = (current_target.distance -
-                             self._optimum_shooting_range)
-            if (math.fabs(distance_left) < 0.5):
-                self._drive_train.arcade_drive(0.0, 0.0, False)
-                self._drive_train.reset_and_start_timer()
-                self._aim_at_target_step = 3
-            else:
-                direction = common.Direction.FORWARD if distance_left > 0 \
-                    else common.Direction.BACKWARD
-                self._drive_train.drive_time(0.1, direction, 0.5)
-        # Step 3 is to drive backwards briefly to stop the robot
-        elif self._aim_at_target_step == 3:
-            if self._drive_train.drive_time(0.1, common.Direction.BACKWARD, 0.5):
                 self._aim_at_target_step = -1
                 return True
 
@@ -874,13 +883,13 @@ class MyRobot(wpilib.SimpleRobot):
 
     def aim_at_nearest(self):
         """Turn and drive until we are aiming at the nearest target."""
-        self._sort_targets()
-        if len(self._current_targets) > 0:
-            # Aim at the nearest target
-            if self.aim_at_target(desired_target=self._current_targets[0]):
-                self._aim_at_target_step = -1
-        else:
-            self._aim_at_target_step = -1
+        if not self._aim_at_target_target:
+            if len(self._current_targets) > 0:
+                self._sort_targets()
+                self._aim_at_target_target = self._current_targets[0]
+
+        # Aim at the nearest target
+        return self.aim_at_target(desired_target=self._aim_at_target_target)
 
     def _check_debug_request(self):
         """Print debug info to driver station."""
@@ -914,6 +923,7 @@ class MyRobot(wpilib.SimpleRobot):
                                                          True)
 
     def _print_targets(self):
+        """Print information about vision targets found."""
         if len(self._current_targets) > 0:
             for trg in self._current_targets:
                 message = "Dis: %(dis)4.1f Ang: %(ang)4.1f" % {

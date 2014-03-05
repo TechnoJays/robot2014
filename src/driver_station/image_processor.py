@@ -31,10 +31,10 @@ class ImageProcessor(object):
             formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
                                           '%(name)s:%(message)s')
             handler = logging.StreamHandler(stream=sys.stdout)
-            handler.setLevel(logging.DEBUG)
+            handler.setLevel(logging.INFO)
             handler.setFormatter(formatter)
         self._logger.addHandler(handler)
-        self._logger.setLevel(logging.DEBUG)
+        self._logger.setLevel(logging.INFO)
 
         self.port = port
         self._sock = None
@@ -115,7 +115,7 @@ class ImageProcessor(object):
                     self._sock = None
                     break
                 # Wait before getting new targets
-                time.sleep(0.2)
+                #time.sleep(0.2)
             # Wait before trying to reconnect
             time.sleep(1)
 
