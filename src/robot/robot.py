@@ -333,10 +333,14 @@ class MyRobot(wpilib.SimpleRobot):
                     (len(self._current_targets) == 1 and
                      self._current_targets[0].no_targets)):
                     self._current_targets = []
+                    self._logger.debug("No targets flag, clearing targets")
             except queue.Empty:
                 self._logger.warn("Target queue is empty")
                 self._current_targets = []
             self._logger.debug("Targets: " + str(self._current_targets))
+        else:
+            self._logger.debug("Target queue is empty")
+
 
         # We set this to -2 to prepare for autonomous use
         self._aim_at_target_step = -2
@@ -384,10 +388,13 @@ class MyRobot(wpilib.SimpleRobot):
                         (len(self._current_targets) == 1 and
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
+                        self._logger.debug("No targets flag, clearing targets")
                 except queue.Empty:
                     self._logger.warn("Target queue is empty")
                     self._current_targets = []
                 self._logger.debug("Targets: " + str(self._current_targets))
+            else:
+                self._logger.debug("Target queue is empty")
 
             # Execute autoscript commands
             if not autoscript_finished:
@@ -530,10 +537,13 @@ class MyRobot(wpilib.SimpleRobot):
                         (len(self._current_targets) == 1 and
                          self._current_targets[0].no_targets)):
                         self._current_targets = []
+                        self._logger.debug("No targets flag, clearing targets")
                 except queue.Empty:
                     self._logger.warn("Target queue is empty")
                     self._current_targets = []
                 self._logger.debug("Targets: " + str(self._current_targets))
+            else:
+                self._logger.debug("Target queue is empty")
 
             # Perform tele-auto routines
             self._perform_tele_auto()
@@ -682,6 +692,7 @@ class MyRobot(wpilib.SimpleRobot):
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_feeder_position(
                                             self._current_feeder_position)
+                    wpilib.Wait(0.3)
                 self._shooter_setup_step = 2
             elif self._shooter_setup_step == 2:
                 self._shooter.ignore_encoder_limits(True)
@@ -744,29 +755,31 @@ class MyRobot(wpilib.SimpleRobot):
                 adjustment += self._shooting_angle_offset
             elif current_target.side == target.Side.RIGHT:
                 adjustment -= self._shooting_angle_offset
-            if self._drive_train.adjust_heading(adjustment, 0.55):
+            if self._drive_train.adjust_heading(adjustment, 0.5):
                 self._aim_at_target_step = 2
         # Step 2 is to drive until we're at the optimum distance to shoot
         elif self._aim_at_target_step == 2:
             # Alternative method is to use camera target distance
-            #distance_left = (current_target.distance -
-            #                 self._optimum_shooting_range)
-            #if (math.fabs(distance_left) < 0.5):
-            #    self._drive_train.arcade_drive(0.0, 0.0, False)
-            #    self._aim_at_target_step = -1
-            #else:
-            #    direction = common.Direction.FORWARD if distance_left > 0 \
-            #        else common.Direction.BACKWARD
-            #    self._drive_train.drive_time(0.1, direction, 0.8)
-            # Normal method is to use range finder to drive
-            if self._drive_train.drive_to_range(self._optimum_shooting_range,
-                                                1.0):
+            distance_left = (current_target.distance -
+                             self._optimum_shooting_range)
+            if (math.fabs(distance_left) < 0.5):
+                self._drive_train.arcade_drive(0.0, 0.0, False)
+                self._drive_train.reset_and_start_timer()
+                self._aim_at_target_step = 3
+            else:
+                direction = common.Direction.FORWARD if distance_left > 0 \
+                    else common.Direction.BACKWARD
+                self._drive_train.drive_time(0.1, direction, 0.5)
+        # Step 3 is to drive backwards briefly to stop the robot
+        elif self._aim_at_target_step == 3:
+            if self._drive_train.drive_time(0.1, common.Direction.BACKWARD, 0.5):
                 self._aim_at_target_step = -1
                 return True
 
         return False
 
-    def wait_for_hot_goal(self, side=None, desired_target=None):
+    def wait_for_hot_goal_with_time(self, side=None, desired_target=None,
+                                    timeout=5.0):
         """Wait for the target goal to be 'hot'.
 
         This can be called with either a particular target in mind or a
@@ -791,6 +804,13 @@ class MyRobot(wpilib.SimpleRobot):
                 return True
         else:
             return True
+
+        elapsed_time = self._timer.elapsed_time_in_secs()
+        time_left = timeout - elapsed_time
+        if time_left < 0:
+            self._timer.stop()
+            return True
+
         return False
 
     def _perform_tele_auto(self):

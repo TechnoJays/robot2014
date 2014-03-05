@@ -48,5 +48,8 @@ class RangeFinder(object):
             self._range_list.append(current_range)
         sorted_ranges = list(self._range_list)
         sorted_ranges.sort()
-        return sorted_ranges[len(sorted_ranges)-1]
+        if len(sorted_ranges) > 0:
+            return sorted_ranges[len(sorted_ranges)-1]
+        else:
+            return 0.0
 
