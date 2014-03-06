@@ -311,6 +311,11 @@ class MyRobot(wpilib.SimpleRobot):
                 self._user_interface.store_button_states(
                                         userinterface.UserControllers.DRIVER)
 
+            # Read sensors
+            self._read_sensors()
+            self._print_range(False)
+            self._print_targets(False)
+
             wpilib.Wait(0.01)
 
     def _autonomous_init(self):
@@ -379,8 +384,8 @@ class MyRobot(wpilib.SimpleRobot):
 
             # Read sensors
             self._read_sensors()
-            self._print_range()
-            #self._print_targets()
+            self._print_range(True)
+            self._print_targets(False)
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
@@ -560,8 +565,8 @@ class MyRobot(wpilib.SimpleRobot):
                 self._check_ignore_limits()
 
                 # Print the range and check for other print timeouts
-                self._print_range()
-                #self._print_targets()
+                self._print_range(True)
+                #self._print_targets(False)
                 self._check_ui_print_timeout()
 
                 # Check swap drivetrain direction request
@@ -910,9 +915,9 @@ class MyRobot(wpilib.SimpleRobot):
                 self._shooter.log_current_state()
                 state = self._shooter.get_current_state()
                 self._user_interface.output_user_message(state, False)
-            self._print_targets()
+            self._print_targets(False)
 
-    def _print_range(self):
+    def _print_range(self, clear=True):
         """Print the range to the nearest object."""
         # Only print the range if nothing else important is being shown
         if not self._disable_range_print:
@@ -920,16 +925,21 @@ class MyRobot(wpilib.SimpleRobot):
                 rng = self._drive_train.get_range()
                 self._user_interface.output_user_message('Range: %(rng)4.1f' %
                                                          {'rng':rng},
-                                                         True)
+                                                         clear)
 
-    def _print_targets(self):
+    def _print_targets(self, clear=False):
         """Print information about vision targets found."""
         if len(self._current_targets) > 0:
+            cleared = False
+            clear_next = False
+            if clear and not cleared:
+                clear_next = True
+                cleared = True
             for trg in self._current_targets:
                 message = "Dis: %(dis)4.1f Ang: %(ang)4.1f" % {
                                                       'dis':trg.distance,
                                                       'ang':trg.angle}
-                self._user_interface.output_user_message(message, False)
+                self._user_interface.output_user_message(message, clear_next)
                 message = "Hot: %(hot)s Side: %(side)1.0f" % {
                                                     'hot':str(trg.is_hot),
                                                     'side':trg.side}
