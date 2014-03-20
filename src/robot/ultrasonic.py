@@ -45,10 +45,10 @@ class RangeFinder(object):
         self._filtered_read_count += 1
         current_range = self.get_range_in_feet()
         # Only store the range in the range list if it's greater than 1.0 and
-        # every 3rd reading.
-        # The reason to only store every 3rd range is to add a time delay in
+        # every 5th reading.
+        # The reason to only store every 5th range is to add a time delay in
         # between readings
-        if current_range > 1.0 and self._filtered_read_count >= 3:
+        if current_range > 1.0 and self._filtered_read_count >= 5:
             if len(self._range_list) >= 21:
                 self._range_list.pop(0)
             self._range_list.append(current_range)
@@ -58,7 +58,7 @@ class RangeFinder(object):
             # Copy and sort the range list
             sorted_ranges = list(self._range_list)
             sorted_ranges.sort()
-            return sorted_ranges[10]
+            return sorted_ranges[18]
         # Otherwise just return the current reading
         else:
             return current_range

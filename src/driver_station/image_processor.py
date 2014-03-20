@@ -31,10 +31,10 @@ class ImageProcessor(object):
             formatter = logging.Formatter('%(asctime)s - %(levelname)s:'
                                           '%(name)s:%(message)s')
             handler = logging.StreamHandler(stream=sys.stdout)
-            handler.setLevel(logging.INFO)
+            handler.setLevel(logging.DEBUG)
             handler.setFormatter(formatter)
         self._logger.addHandler(handler)
-        self._logger.setLevel(logging.INFO)
+        self._logger.setLevel(logging.DEBUG)
 
         self.port = port
         self._sock = None

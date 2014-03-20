@@ -314,7 +314,7 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             self._read_sensors()
             self._print_range(False)
-            self._print_targets(False)
+            #self._print_targets(False)
 
             wpilib.Wait(0.01)
 
@@ -385,7 +385,7 @@ class MyRobot(wpilib.SimpleRobot):
             # Read sensors
             self._read_sensors()
             self._print_range(True)
-            self._print_targets(False)
+            #self._print_targets(False)
 
             # Get targets in the queue if any exist
             if not self._target_queue.empty():
@@ -701,14 +701,14 @@ class MyRobot(wpilib.SimpleRobot):
                     self._current_feeder_position = common.Direction.DOWN
                     self._feeder.set_feeder_position(
                                             self._current_feeder_position)
-                    wpilib.Wait(0.3)
+                    wpilib.Wait(0.5)
                 self._shooter_setup_step = 2
             elif self._shooter_setup_step == 2:
                 self._shooter.ignore_encoder_limits(True)
                 self._shooter.reset_and_start_timer()
                 self._shooter_setup_step = 3
             elif self._shooter_setup_step == 3:
-                if self._shooter.shoot_time(1.5, common.Direction.DOWN, 0.8):
+                if self._shooter.shoot_time(2.2, common.Direction.DOWN, 0.4):
                     self._shooter_setup_step = 4
             elif self._shooter_setup_step == 4:
                 self._shooter.reset_sensors()
@@ -767,8 +767,7 @@ class MyRobot(wpilib.SimpleRobot):
                 self._drive_train.reset_and_start_timer()
                 self._aim_at_target_step = 2
             else:
-                direction = common.Direction.FORWARD if distance_left > 0 \
-                    else common.Direction.BACKWARD
+                direction = -1.0 if distance_left > 0 else 1.0
                 directional_speed = direction * 0.5
                 self._drive_train.arcade_drive(directional_speed, 0.0, False)
         # Step 2 is to drive backwards briefly to stop the robot
