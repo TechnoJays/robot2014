@@ -767,11 +767,13 @@ class MyRobot(wpilib.SimpleRobot):
                 self._drive_train.reset_and_start_timer()
                 self._aim_at_target_step = 2
             else:
+                # TODO: add variable speed based on distance to target
                 direction = -1.0 if distance_left > 0 else 1.0
-                directional_speed = direction * 0.5
+                directional_speed = direction * 0.3
                 self._drive_train.arcade_drive(directional_speed, 0.0, False)
         # Step 2 is to drive backwards briefly to stop the robot
         elif self._aim_at_target_step == 2:
+            # TODO: this should not be hard-coded to backwards
             if self._drive_train.drive_time(0.1, common.Direction.BACKWARD,
                                             0.5):
                 self._drive_train.reset_sensors()
@@ -780,12 +782,17 @@ class MyRobot(wpilib.SimpleRobot):
         elif self._aim_at_target_step == 3:
             # Include an offset. This is required since the image targets aren't
             # exactly where we want to aim (they're to the outside of the goals)
+            # TODO: this was turning oddly: sometimes it would work, sometimes
+            # it would turn way too far
             adjustment = current_target.angle
             if current_target.side == target.Side.LEFT:
                 adjustment += self._shooting_angle_offset
             elif current_target.side == target.Side.RIGHT:
                 adjustment -= self._shooting_angle_offset
-            if self._drive_train.adjust_heading(adjustment, 0.5):
+            else:
+                self._aim_at_target_step = -1
+                return True
+            if self._drive_train.adjust_heading(adjustment, 0.3):
                 self._aim_at_target_step = -1
                 return True
 
@@ -887,10 +894,9 @@ class MyRobot(wpilib.SimpleRobot):
 
     def aim_at_nearest(self):
         """Turn and drive until we are aiming at the nearest target."""
-        if not self._aim_at_target_target:
-            if len(self._current_targets) > 0:
-                self._sort_targets()
-                self._aim_at_target_target = self._current_targets[0]
+        if len(self._current_targets) > 0:
+            self._sort_targets()
+            self._aim_at_target_target = self._current_targets[0]
 
         # Aim at the nearest target
         return self.aim_at_target(desired_target=self._aim_at_target_target)
